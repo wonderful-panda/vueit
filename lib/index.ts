@@ -30,14 +30,19 @@ function makeComponent(target: Function, option: vuejs.ComponentOption): Functio
     option.name = option.name || target.name;
     const proto = target.prototype;
     Object.getOwnPropertyNames(proto).filter(name => name !== "constructor").forEach(name => {
-        // define hooks
+        // hooks
         if (internalHooks.indexOf(name) > -1) {
             option[name] = proto[name];
+        }
+        const descriptor = Object.getOwnPropertyDescriptor(proto, name);
+        if (typeof descriptor.value === "function") {
+            // methods
+            (option.methods || (option.methods = {}))[name] = descriptor.value;
         }
     });
     const ann = Reflect.getOwnMetadata(AnnotatedOptionsKey, proto) as AnnotatedOptions;
     if (ann != null) {
-        // define props
+        // props
         option.props = option.props || ann.props;
     }
     // find super

@@ -80,4 +80,19 @@ describe("vue-component-decorator", function () {
             assert(c.msg3 === "value3");
         });
     });
+
+    describe("methods", function () {
+        @VueComponent()
+        class Base extends Vue {
+            value: number;
+            data(): any { return { value: 1 }; }
+            twice() {
+                return this.value * 2;
+            }
+        };
+        it("basic", function() {
+            const c = new Base();
+            assert(c.$interpolate("{{ twice() }}") === "2");
+        });
+    });
 });
