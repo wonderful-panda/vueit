@@ -53,7 +53,7 @@ describe("vue-component-decorator", function () {
         it("basic", function () {
             const vm = new Vue({
                 template: "<div><test v-ref:target msg1='value1' /></div>",
-                components: {test: Basic}
+                components: { test: Basic }
             });
             vm.$mount();
             const c = vm.$refs["target"] as Basic;
@@ -71,13 +71,68 @@ describe("vue-component-decorator", function () {
         it("extended - props from both Basic and Extended are enabled", function () {
             const vm = new Vue({
                 template: "<div><test v-ref:target msg1='value1' msg3='value3' /></div>",
-                components: {test: Extended}
+                components: { test: Extended }
             });
             vm.$mount();
             const c = vm.$refs["target"] as Extended;
             assert(c.msg1 === "value1");
             assert(c.msg2 === "value2extended");
             assert(c.msg3 === "value3");
+        });
+
+        @VueComponent()
+        class Validation extends Vue {
+            @VueComponent.prop()
+            str: string;
+            @VueComponent.prop()
+            num: number;
+            @VueComponent.prop()
+            arr: number[];
+            @VueComponent.prop()
+            func: () => string;
+            @VueComponent.prop({ type: null })
+            strWithoutTypecheck: string;
+            @VueComponent.prop(Number)
+            strAsNum: string;
+        }
+        describe("validation - auto validation from design type", function () {
+            const Root = Vue.extend({
+                template: `<div>
+                             <test v-ref:target
+                                   :str="str" :num="num" :arr="arr" :func="func"
+                                   :str-without-typecheck="strWithoutTypecheck"
+                                   :str-as-num="strAsNum" />
+                           </div>`,
+                components: { test: Validation }
+            });
+            const factory = (str, num, arr, func, strWithoutTypecheck, strAsNum) => {
+                const vm = new Root({
+                    data: { str, num, arr, func, strWithoutTypecheck, strAsNum }
+                });
+                vm.$mount();
+                return vm;
+            };
+            it("accepted", function () {
+                const vm = factory("value", 1, [1, 2, 3], () => "ret", "value", 1);
+                const c = vm.$refs["target"] as Validation;
+                assert(c.str === "value");
+                assert(c.num === 1);
+                assert.deepEqual(c.arr, [1, 2, 3]);
+                assert(c.strWithoutTypecheck === "value");
+                assert(c.func instanceof Function && c.func() === "ret");
+                assert.equal(c.strAsNum, 1);
+            });
+
+            it("rejected", function () {
+                const vm = factory(1, "value", 1, 1, 1, "value");
+                const c = vm.$refs["target"] as Validation;
+                assert(c.str === undefined);
+                assert(c.num === undefined);
+                assert(c.arr === undefined);
+                assert(c.func === undefined);
+                assert.equal(c.strWithoutTypecheck, 1);
+                assert(c.strAsNum === undefined);
+            });
         });
     });
 
@@ -90,7 +145,7 @@ describe("vue-component-decorator", function () {
                 return this.value * 2;
             }
         };
-        it("basic", function() {
+        it("basic", function () {
             const c = new Base();
             assert(c.$interpolate("{{ twice() }}") === "2");
         });
