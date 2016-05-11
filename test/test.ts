@@ -5,6 +5,7 @@ import { jsdom } from "jsdom";
 
 global["document"] = jsdom("<html><body>dummy document</body></html>");
 global["window"] = document.defaultView;
+Vue.config.async = false;
 
 describe("vue-component-decorator", function () {
     describe("hooks", function () {
@@ -59,6 +60,7 @@ describe("vue-component-decorator", function () {
             const c = vm.$refs["target"] as Basic;
             assert(c.msg1 === "value1");
             assert(c.msg2 === "value2default");
+            c.$destroy();
         });
 
         @VueComponent()
@@ -78,6 +80,7 @@ describe("vue-component-decorator", function () {
             assert(c.msg1 === "value1");
             assert(c.msg2 === "value2extended");
             assert(c.msg3 === "value3");
+            c.$destroy();
         });
 
         @VueComponent()
@@ -89,49 +92,70 @@ describe("vue-component-decorator", function () {
             @VueComponent.prop()
             arr: number[];
             @VueComponent.prop()
-            func: () => string;
+            func: (v: number) => number;
             @VueComponent.prop({ type: null })
             strWithoutTypecheck: string;
             @VueComponent.prop(Number)
             strAsNum: string;
         }
         describe("validation - auto validation from design type", function () {
-            const Root = Vue.extend({
+            const vm = new Vue({
                 template: `<div>
                              <test v-ref:target
-                                   :str="str" :num="num" :arr="arr" :func="func"
-                                   :str-without-typecheck="strWithoutTypecheck"
-                                   :str-as-num="strAsNum" />
+                                   :str="value" :num="value" :arr="value" :func="value"
+                                   :str-without-typecheck="value" :str-as-num="value" />
                            </div>`,
+                data: { value: null },
                 components: { test: Validation }
-            });
-            const factory = (str, num, arr, func, strWithoutTypecheck, strAsNum) => {
-                const vm = new Root({
-                    data: { str, num, arr, func, strWithoutTypecheck, strAsNum }
-                });
-                vm.$mount();
-                return vm;
-            };
-            it("accepted", function () {
-                const vm = factory("value", 1, [1, 2, 3], () => "ret", "value", 1);
-                const c = vm.$refs["target"] as Validation;
-                assert(c.str === "value");
-                assert(c.num === 1);
-                assert.deepEqual(c.arr, [1, 2, 3]);
-                assert(c.strWithoutTypecheck === "value");
-                assert(c.func instanceof Function && c.func() === "ret");
-                assert.equal(c.strAsNum, 1);
+            }) as any;
+            vm.$mount();
+            const c = vm.$refs["target"] as Validation;
+
+            before(function () {
+                // disable invalid prop warning
+                Vue.config.silent = true;
             });
 
-            it("rejected", function () {
-                const vm = factory(1, "value", 1, 1, 1, "value");
-                const c = vm.$refs["target"] as Validation;
-                assert(c.str === undefined);
-                assert(c.num === undefined);
-                assert(c.arr === undefined);
-                assert(c.func === undefined);
-                assert.equal(c.strWithoutTypecheck, 1);
-                assert(c.strAsNum === undefined);
+            it("string", function () {
+                vm.value = "s";
+                assert.equal(c.str, "s");
+                assert.equal(c.num, undefined);
+                assert.equal(c.arr, undefined);
+                assert.equal(c.func, undefined);
+                assert(c.strWithoutTypecheck === "s");
+                assert.equal(c.strAsNum, undefined);
+            });
+            it("number", function () {
+                vm.value = 1;
+                assert.equal(c.str, undefined);
+                assert.equal(c.num, 1);
+                assert.equal(c.arr, undefined);
+                assert.equal(c.func, undefined);
+                assert(c.strWithoutTypecheck as any === 1);
+                assert(c.strAsNum as any === 1);
+            });
+            it("array", function () {
+                vm.value = [1, 2, 3];
+                assert.equal(c.str, undefined);
+                assert.equal(c.num, undefined);
+                assert.deepEqual(c.arr, [1, 2, 3]);
+                assert.equal(c.func, undefined);
+                assert.deepEqual(c.strWithoutTypecheck, [1, 2, 3]);
+                assert.equal(c.strAsNum, undefined);
+            });
+            it("function", function () {
+                vm.value = (v: number) => v * 2;
+                assert.equal(c.str, undefined);
+                assert.equal(c.num, undefined);
+                assert.equal(c.arr, undefined);
+                assert.equal(c.func(1), 2);
+                assert.equal((c.strWithoutTypecheck as any)(1), 2);
+                assert.equal(c.strAsNum, undefined);
+            });
+
+            after(function () {
+                Vue.config.silent = false;
+                c.$destroy();
             });
         });
     });
@@ -148,6 +172,7 @@ describe("vue-component-decorator", function () {
         it("basic", function () {
             const c = new Base();
             assert(c.$interpolate("{{ twice() }}") === "2");
+            c.$destroy();
         });
     });
 });
