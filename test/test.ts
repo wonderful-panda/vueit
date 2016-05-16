@@ -1,13 +1,14 @@
 import * as assert from "power-assert";
 import * as Vue from "vue";
-import VueComponent from "../lib/index";
+import { component, prop } from "../lib/index";
 import { jsdom } from "jsdom";
+
 
 global["document"] = jsdom(`<html><body /></html>`);
 global["window"] = document.defaultView;
 Vue.config.async = false;
 
-describe("vue-component-decorator", function () {
+describe("vueit", function () {
 
     let components: any[];
     beforeEach(function () {
@@ -31,7 +32,7 @@ describe("vue-component-decorator", function () {
     }
 
     describe("hooks", function () {
-        @VueComponent()
+        @component()
         class Base extends Vue {
             created_: boolean;
             destroyed_: boolean;
@@ -47,7 +48,7 @@ describe("vue-component-decorator", function () {
             assert(c.destroyed_ === true);
         });
 
-        @VueComponent()
+        @component()
         class Extended extends Base {
             created_ex: boolean;
             destroyed_ex: boolean;
@@ -66,11 +67,11 @@ describe("vue-component-decorator", function () {
     });
 
     describe("props", function () {
-        @VueComponent()
+        @component()
         class Basic extends Vue {
-            @VueComponent.prop()
+            @prop()
             msg1: string;
-            @VueComponent.prop({ default: "value2default" })
+            @prop({ default: "value2default" })
             msg2: string;
         }
         it("basic", function () {
@@ -84,11 +85,11 @@ describe("vue-component-decorator", function () {
             assert(c.msg2 === "value2");
         });
 
-        @VueComponent()
+        @component()
         class Extended extends Basic {
-            @VueComponent.prop({ default: "value2extended" })
+            @prop({ default: "value2extended" })
             msg2: string;
-            @VueComponent.prop()
+            @prop()
             msg3: string;
         }
         it("extended - props from both Basic and Extended are enabled", function () {
@@ -98,19 +99,19 @@ describe("vue-component-decorator", function () {
             assert(c.msg3 === "value3");
         });
 
-        @VueComponent()
+        @component()
         class Validation extends Vue {
-            @VueComponent.prop()
+            @prop()
             str: string;
-            @VueComponent.prop()
+            @prop()
             num: number;
-            @VueComponent.prop()
+            @prop()
             arr: number[];
-            @VueComponent.prop()
+            @prop()
             func: (v: number) => number;
-            @VueComponent.prop({ type: null })
+            @prop({ type: null })
             withoutCheck: string;
-            @VueComponent.prop(Number)
+            @prop(Number)
             mismatchType: string;
         }
 
@@ -158,7 +159,7 @@ describe("vue-component-decorator", function () {
     });
 
     describe("methods", function () {
-        @VueComponent()
+        @component()
         class Base extends Vue {
             value: number;
             data(): any { return { value: 1 }; }
@@ -174,7 +175,7 @@ describe("vue-component-decorator", function () {
     });
 
     describe("computed", function () {
-        @VueComponent()
+        @component()
         class Base extends Vue {
             value: string;
             data() {

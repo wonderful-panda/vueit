@@ -7,8 +7,8 @@ interface AnnotatedOptions {
     props: { [key: string]: vuejs.PropOption };
 }
 
-interface VueComponent {
-    (option?: vuejs.ComponentOption): ClassDecorator;
+interface Vueit {
+    component: (option?: vuejs.ComponentOption) => ClassDecorator;
     prop: (option?: vuejs.PropOption) => PropertyDecorator;
 }
 
@@ -84,12 +84,13 @@ function defineProp(target: Object, propertyKey: string, option: PropOption) {
     ann.props[propertyKey] = option;
 }
 
-const vueComponent: any = (option?: vuejs.ComponentOption): ClassDecorator => {
-    return target => makeComponent(target, option || {});
-};
+const vueit = {
+    component: function (option?: vuejs.ComponentOption): ClassDecorator {
+        return target => makeComponent(target, option || {});
+    },
+    prop: function (option?: PropOption): PropertyDecorator {
+        return (target, propertyKey) => defineProp(target, propertyKey.toString(), option || {});
+    }
+}
 
-vueComponent.prop = function (option?: PropOption): PropertyDecorator {
-    return (target, propertyKey) => defineProp(target, propertyKey.toString(), option || {});
-};
-
-export default vueComponent as VueComponent;
+export = vueit;
