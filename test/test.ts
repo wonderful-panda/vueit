@@ -1,6 +1,6 @@
 import * as assert from "power-assert";
 import * as Vue from "vue";
-import { component, prop } from "../lib/index";
+import { component, prop, watch } from "../lib/index";
 import { jsdom } from "jsdom";
 
 
@@ -192,6 +192,27 @@ describe("vueit", function () {
             assert(c.upper === "OLD");
             c.upper = "NEW";
             assert(c.value === "new");
+        });
+    });
+
+    describe("watch", function () {
+        @component()
+        class Base extends Vue {
+            value: number;
+            history: any[];
+            data() {
+                return { value: 1, history: [] };
+            }
+            @watch("value")
+            watchValue(value: number, oldValue: number) {
+                this.history.push([value, oldValue]);
+            }
+        }
+        it("basic", function () {
+            const c = createComponent(Base);
+            c.value = 2;
+            c.value = 3;
+            assert.deepEqual(c.history, [[2, 1], [3, 2]]);
         });
     });
 });

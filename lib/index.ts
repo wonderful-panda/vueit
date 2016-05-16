@@ -2,9 +2,15 @@ import "reflect-metadata";
 import * as Vue from "vue";
 
 declare type PropOption = vuejs.PropOption | (new (...args: any[]) => any) | (new (...args: any[]) => any)[];
+interface WatchOption {
+    name: string;
+    deep?: boolean;
+    immediate?: boolean;
+}
 
-interface AnnotatedOptions {
-    props: { [key: string]: vuejs.PropOption };
+class AnnotatedOptions {
+    props: { [key: string]: vuejs.PropOption } = {};
+    watch: { [key: string]: vuejs.WatchOption } = {};
 }
 
 const AnnotatedOptionsKey = "vue-component-decorator:options";
@@ -50,6 +56,8 @@ function makeComponent(target: Function, option: vuejs.ComponentOption): Functio
     if (ann != null) {
         // props
         option.props = option.props || ann.props;
+        // watch
+        option.watch = option.watch || ann.watch;
     }
     // find super
     const superProto = Object.getPrototypeOf(proto);
@@ -60,12 +68,16 @@ function makeComponent(target: Function, option: vuejs.ComponentOption): Functio
     return Super.extend(option);
 }
 
-function defineProp(target: Object, propertyKey: string, option: PropOption) {
+function getAnnotatedOptions(target: Object): AnnotatedOptions {
     let ann = Reflect.getOwnMetadata(AnnotatedOptionsKey, target) as AnnotatedOptions;
     if (ann == null) {
-        ann = { props: {} };
+        ann = new AnnotatedOptions();
         Reflect.defineMetadata(AnnotatedOptionsKey, ann, target);
     }
+    return ann;
+}
+
+function defineProp(target: Object, propertyKey: string, option: PropOption) {
     // detect design type and set prop validation
     if (option instanceof Function || option instanceof Array || "type" in option) {
         // type specified explicitly, nothing to do
@@ -76,7 +88,20 @@ function defineProp(target: Object, propertyKey: string, option: PropOption) {
             option.type = type;
         }
     }
-    ann.props[propertyKey] = option;
+    getAnnotatedOptions(target).props[propertyKey] = option;
+}
+
+function defineWatch(target: Object, propertyKey: string, option: WatchOption) {
+    const descriptor = Object.getOwnPropertyDescriptor(target, propertyKey);
+    if (typeof descriptor.value !== "function") {
+        // TODO: show warning
+        return;
+    }
+    getAnnotatedOptions(target).watch[option.name] = {
+        handler: descriptor.value,
+        deep: option.deep,
+        immidiate: option.immediate
+    };
 }
 
 const vueit = {
@@ -85,6 +110,10 @@ const vueit = {
     },
     prop: function (option?: PropOption): PropertyDecorator {
         return (target, propertyKey) => defineProp(target, propertyKey.toString(), option || {});
+    },
+    watch: function (option: string|WatchOption): PropertyDecorator {
+        return (target, propertyKey) => defineWatch(target, propertyKey.toString(),
+                                                    typeof option === "string" ? { name: option } : option);
     }
 }
 
