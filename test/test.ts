@@ -172,4 +172,26 @@ describe("vue-component-decorator", function () {
             c.$destroy();
         });
     });
+
+    describe("computed", function () {
+        @VueComponent()
+        class Base extends Vue {
+            value: string;
+            data() {
+                return { value: "" };
+            }
+            get upper(): string {
+                return this.value.toUpperCase();
+            }
+            set upper(value: string) {
+                this.value = value.toLowerCase();
+            }
+        }
+        it("basic", function () {
+            const c = createComponent(Base, {}, { value: "old" });
+            assert(c.upper === "OLD");
+            c.upper = "NEW";
+            assert(c.value === "new");
+        });
+    });
 });

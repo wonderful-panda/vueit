@@ -43,6 +43,13 @@ function makeComponent(target: Function, option: vuejs.ComponentOption): Functio
             // methods
             (option.methods || (option.methods = {}))[name] = descriptor.value;
         }
+        else if (descriptor.get || descriptor.set) {
+            // computed
+            (option.computed || (option.computed = {}))[name] = {
+                get: descriptor.get,
+                set: descriptor.set
+            };
+        }
     });
     const ann = Reflect.getOwnMetadata(AnnotatedOptionsKey, proto) as AnnotatedOptions;
     if (ann != null) {
