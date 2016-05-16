@@ -121,7 +121,6 @@ describe("vueit", function () {
                            :str="str" :num="num" :arr="arr" :func="func"
                            :without-check="withoutCheck" :mismatch-type="mismatchType" />
                        </div>`,
-            data: { str: null, num: null, arr: null, func: null, withoutCheck: null, mismatchType: null },
             components: { target: Validation }
         });
 

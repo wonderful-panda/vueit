@@ -7,12 +7,7 @@ interface AnnotatedOptions {
     props: { [key: string]: vuejs.PropOption };
 }
 
-interface Vueit {
-    component: (option?: vuejs.ComponentOption) => ClassDecorator;
-    prop: (option?: vuejs.PropOption) => PropertyDecorator;
-}
-
-const AnnotatedOptionsKey = Symbol("vue-component-decorator:options");
+const AnnotatedOptionsKey = "vue-component-decorator:options";
 const DesignTypeKey = "design:type";
 
 const internalHooks = [
