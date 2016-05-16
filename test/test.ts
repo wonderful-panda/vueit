@@ -10,17 +10,17 @@ Vue.config.async = false;
 describe("vue-component-decorator", function () {
 
     let components: any[];
-    beforeEach(function() {
+    beforeEach(function () {
         components = [];
     });
-    afterEach(function() {
+    afterEach(function () {
         components.forEach(c => { c.$destroy(); });
         assert(components.length === 0);
     });
     function createComponent<T>(C: new (o: vuejs.ComponentOption) => T, propsData?: Object, data?: Object): T {
         const c = new C({
             el: document.createElement("div"),
-            beforeDestroy: function() {
+            beforeDestroy: function () {
                 components.$remove(this);
             },
             data: data,
