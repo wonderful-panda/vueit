@@ -1,6 +1,6 @@
 import * as assert from "power-assert";
 import * as Vue from "vue";
-import { component, prop, watch } from "../lib/index";
+import { component, prop, watch, on } from "../lib/index";
 import { jsdom } from "jsdom";
 
 
@@ -195,17 +195,22 @@ describe("vueit", function () {
         });
     });
 
-    describe("watch", function () {
+    describe("watch and events", function () {
         @component()
         class Base extends Vue {
             value: number;
             history: any[];
+            messages: string[];
             data() {
-                return { value: 1, history: [] };
+                return { value: 1, history: [], messages: [] };
             }
             @watch("value")
             watchValue(value: number, oldValue: number) {
                 this.history.push([value, oldValue]);
+            }
+            @on("message")
+            onMessage(msg: string) {
+                this.messages.push(msg);
             }
         }
         it("basic", function () {
@@ -213,6 +218,8 @@ describe("vueit", function () {
             c.value = 2;
             c.value = 3;
             assert.deepEqual(c.history, [[2, 1], [3, 2]]);
+            c.$emit("message", "hello");
+            assert.deepEqual(c.messages, ["hello"]);
         });
     });
 });

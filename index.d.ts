@@ -10,6 +10,7 @@ declare namespace vueit {
         component: (option?: vuejs.ComponentOption) => ClassDecorator;
         prop: (option?: PropOption) => PropertyDecorator;
         watch: (option: string|WatchOption) => PropertyDecorator;
+        on: (name: string) => PropertyDecorator;
     }
 }
 

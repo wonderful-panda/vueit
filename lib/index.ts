@@ -11,6 +11,7 @@ interface WatchOption {
 class AnnotatedOptions {
     props: { [key: string]: vuejs.PropOption } = {};
     watch: { [key: string]: vuejs.WatchOption } = {};
+    events: { [key: string]: (...args: any[]) => boolean | void } = {};
 }
 
 const AnnotatedOptionsKey = "vue-component-decorator:options";
@@ -58,6 +59,8 @@ function makeComponent(target: Function, option: vuejs.ComponentOption): Functio
         option.props = option.props || ann.props;
         // watch
         option.watch = option.watch || ann.watch;
+        // events
+        option.events = option.events || ann.events;
     }
     // find super
     const superProto = Object.getPrototypeOf(proto);
@@ -104,6 +107,15 @@ function defineWatch(target: Object, propertyKey: string, option: WatchOption) {
     };
 }
 
+function defineEvent(target: Object, propertyKey: string, name: string) {
+    const descriptor = Object.getOwnPropertyDescriptor(target, propertyKey);
+    if (typeof descriptor.value !== "function") {
+        // TODO: show warning
+        return;
+    }
+    getAnnotatedOptions(target).events[name] = descriptor.value;
+}
+
 const vueit = {
     component: function (option?: vuejs.ComponentOption): ClassDecorator {
         return target => makeComponent(target, option || {});
@@ -111,9 +123,12 @@ const vueit = {
     prop: function (option?: PropOption): PropertyDecorator {
         return (target, propertyKey) => defineProp(target, propertyKey.toString(), option || {});
     },
-    watch: function (option: string|WatchOption): PropertyDecorator {
+    watch: function (option: string | WatchOption): PropertyDecorator {
         return (target, propertyKey) => defineWatch(target, propertyKey.toString(),
-                                                    typeof option === "string" ? { name: option } : option);
+            typeof option === "string" ? { name: option } : option);
+    },
+    on: function (name: string): PropertyDecorator {
+        return (target, propertyKey) => defineEvent(target, propertyKey.toString(), name);
     }
 }
 
