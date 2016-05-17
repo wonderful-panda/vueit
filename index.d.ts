@@ -14,8 +14,6 @@ declare namespace vueit {
     }
 }
 
-declare const v: vueit.Static;
-declare module "vueit" {
-    export = v;
-}
+declare const vueit: vueit.Static;
+export = vueit;
 
