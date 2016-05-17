@@ -1,6 +1,7 @@
 {
   "ambientDevDependencies": {
     "empower": "registry:dt/empower#0.0.0+20160317120654",
+    "jquery": "registry:dt/jquery#1.10.0+20160417213236",
     "jsdom": "registry:dt/jsdom#2.0.0+20160316155526",
     "mocha": "registry:dt/mocha#2.2.5+20160317120654",
     "node": "registry:dt/node#4.0.0+20160509082809",
