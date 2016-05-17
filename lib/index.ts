@@ -87,7 +87,7 @@ function defineProp(target: Object, propertyKey: string, option: PropOption) {
     }
     else {
         const type = Reflect.getOwnMetadata(DesignTypeKey, target, propertyKey);
-        if ([String, Number, Function, Array].indexOf(type) > -1) {
+        if ([String, Number, Boolean, Function, Array].indexOf(type) > -1) {
             option.type = type;
         }
     }

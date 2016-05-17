@@ -106,6 +106,8 @@ describe("vueit", function () {
             @prop()
             num: number;
             @prop()
+            bool: boolean;
+            @prop()
             arr: number[];
             @prop()
             func: (v: number) => number;
@@ -118,7 +120,7 @@ describe("vueit", function () {
         const Root = Vue.extend({
             template: `<div>
                          <target v-ref:target
-                           :str="str" :num="num" :arr="arr" :func="func"
+                           :str="str" :num="num" :bool="bool" :arr="arr" :func="func"
                            :without-check="withoutCheck" :mismatch-type="mismatchType" />
                        </div>`,
             components: { target: Validation }
@@ -131,11 +133,12 @@ describe("vueit", function () {
             });
             it("values of design types", function () {
                 const root = createComponent(Root, {}, {
-                    str: "s", num: 1, arr: [1, 2, 3], func: v => v * 2, withoutCheck: "s", mismatchType: "s"
+                    str: "s", num: 1, bool: true, arr: [1, 2, 3], func: v => v * 2, withoutCheck: "s", mismatchType: "s"
                 });
                 const c = root.$refs["target"] as Validation;
                 assert(c.str === "s");
                 assert(c.num === 1);
+                assert(c.bool === true);
                 assert.deepEqual(c.arr, [1, 2, 3]);
                 assert(c.func(1) === 2);
                 assert(c.withoutCheck === "s");
@@ -144,11 +147,12 @@ describe("vueit", function () {
 
             it("values of other types", function () {
                 const root = createComponent(Root, {}, {
-                    str: 1, num: "s", arr: 1, func: 1, withoutCheck: 1, mismatchType: 1
+                    str: 1, num: "s", bool: 1, arr: 1, func: 1, withoutCheck: 1, mismatchType: 1
                 });
                 const c = root.$refs["target"] as Validation;
                 assert(c.str === undefined);
                 assert(c.num === undefined);
+                assert(c.bool === undefined);
                 assert(c.arr === undefined);
                 assert(c.func === undefined);
                 assert(c.withoutCheck as any === 1, "accepted because of null validator");
