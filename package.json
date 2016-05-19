@@ -2,9 +2,9 @@
   "name": "vueit",
   "version": "0.0.1",
   "description": "Decorators to make vuejs component from typescript class",
-  "main": "dist/lib/index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --project tsconfig.dist.json",
     "test": "mocha --compilers ts:espower-typescript/guess test/**/*.ts",
     "testw": "mocha --compilers ts:espower-typescript/guess test/**/*.ts --watch"
   },
