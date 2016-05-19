@@ -1,3 +1,4 @@
+"use strict";
 import * as assert from "power-assert";
 import * as Vue from "vue";
 import { component, prop, watch, on } from "../lib/index";
