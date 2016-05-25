@@ -1,5 +1,4 @@
 declare namespace vueit {
-    type PropOption = vuejs.PropOption | (new (...args: any[]) => any) | (new (...args: any[]) => any)[];
     interface WatchOption {
         name: string;
         deep?: boolean;
@@ -8,7 +7,7 @@ declare namespace vueit {
 
     interface Static {
         component: (option?: vuejs.ComponentOption) => ClassDecorator;
-        prop: (option?: PropOption) => PropertyDecorator;
+        prop: (option?: vuejs.PropOption) => PropertyDecorator;
         watch: (option: string|WatchOption) => PropertyDecorator;
         on: (name: string) => PropertyDecorator;
     }

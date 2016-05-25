@@ -1,7 +1,6 @@
 import "reflect-metadata";
 import * as Vue from "vue";
 
-declare type PropOption = vuejs.PropOption | (new (...args: any[]) => any) | (new (...args: any[]) => any)[];
 interface WatchOption {
     name: string;
     deep?: boolean;
@@ -81,9 +80,9 @@ function getAnnotatedOptions(target: Object): AnnotatedOptions {
     return ann;
 }
 
-function defineProp(target: Object, propertyKey: string, option: PropOption) {
+function defineProp(target: Object, propertyKey: string, option: vuejs.PropOption) {
     // detect design type and set prop validation
-    if (option instanceof Function || option instanceof Array || "type" in option) {
+    if ("type" in option) {
         // type specified explicitly, nothing to do
     }
     else {

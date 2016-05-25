@@ -114,7 +114,7 @@ describe("vueit", function () {
             func: (v: number) => number;
             @prop({ type: null })
             withoutCheck: string;
-            @prop(Number)
+            @prop({ type: Number })
             mismatchType: string;
         }
 
