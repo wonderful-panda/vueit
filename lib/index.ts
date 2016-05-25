@@ -33,6 +33,7 @@ const internalHooks = [
 ];
 
 function makeComponent(target: Function, option: vuejs.ComponentOption): Function | void {
+    option = Object.assign({}, option);
     option.name = option.name || target.name;
     const proto = target.prototype;
     Object.getOwnPropertyNames(proto).filter(name => name !== "constructor").forEach(name => {
@@ -88,7 +89,7 @@ function defineProp(target: Object, propertyKey: string, option: PropOption) {
     else {
         const type = Reflect.getOwnMetadata(DesignTypeKey, target, propertyKey);
         if ([String, Number, Boolean, Function, Array].indexOf(type) > -1) {
-            option.type = type;
+            option = Object.assign({ type }, option);
         }
     }
     getAnnotatedOptions(target).props[propertyKey] = option;
