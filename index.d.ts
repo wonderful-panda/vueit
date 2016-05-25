@@ -8,6 +8,9 @@ declare namespace vueit {
     interface Static {
         component: (option?: vuejs.ComponentOption) => ClassDecorator;
         prop: (option?: vuejs.PropOption) => PropertyDecorator;
+        p: PropertyDecorator;
+        pr: PropertyDecorator;
+        pd: (defaultValue: any) => PropertyDecorator;
         watch: (option: string|WatchOption) => PropertyDecorator;
         on: (name: string) => PropertyDecorator;
     }

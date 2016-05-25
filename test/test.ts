@@ -1,7 +1,7 @@
 "use strict";
 import * as assert from "power-assert";
 import * as Vue from "vue";
-import { component, prop, watch, on } from "../lib/index";
+import { component, prop, p, pd, watch, on } from "../lib/index";
 import { jsdom } from "jsdom";
 
 
@@ -70,10 +70,8 @@ describe("vueit", function () {
     describe("props", function () {
         @component()
         class Basic extends Vue {
-            @prop()
-            msg1: string;
-            @prop({ default: "value2default" })
-            msg2: string;
+            @p msg1: string;
+            @pd("value2default") msg2: string;
         }
         it("basic", function () {
             const c = createComponent(Basic, { msg1: "value1" });
@@ -88,10 +86,8 @@ describe("vueit", function () {
 
         @component()
         class Extended extends Basic {
-            @prop({ default: "value2extended" })
-            msg2: string;
-            @prop()
-            msg3: string;
+            @pd("value2extended") msg2: string;
+            @p msg3: string;
         }
         it("extended - props from both Basic and Extended are enabled", function () {
             const c = createComponent(Extended, { msg1: "value1", msg3: "value3" });
@@ -102,20 +98,13 @@ describe("vueit", function () {
 
         @component()
         class Validation extends Vue {
-            @prop()
-            str: string;
-            @prop()
-            num: number;
-            @prop()
-            bool: boolean;
-            @prop()
-            arr: number[];
-            @prop()
-            func: (v: number) => number;
-            @prop({ type: null })
-            withoutCheck: string;
-            @prop({ type: Number })
-            mismatchType: string;
+            @p str: string;
+            @p num: number;
+            @p bool: boolean;
+            @p arr: number[];
+            @p func: (v: number) => number;
+            @prop({ type: null }) withoutCheck: string;
+            @prop({ type: Number }) mismatchType: string;
         }
 
         const Root = Vue.extend({

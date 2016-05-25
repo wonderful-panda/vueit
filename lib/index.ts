@@ -116,13 +116,18 @@ function defineEvent(target: Object, propertyKey: string, name: string) {
     getAnnotatedOptions(target).events[name] = descriptor.value;
 }
 
+const prop = function (option?: vuejs.PropOption): PropertyDecorator {
+    return (target, propertyKey) => defineProp(target, propertyKey.toString(), option || {});
+};
+
 const vueit = {
     component: function (option?: vuejs.ComponentOption): ClassDecorator {
         return target => makeComponent(target, option || {});
     },
-    prop: function (option?: PropOption): PropertyDecorator {
-        return (target, propertyKey) => defineProp(target, propertyKey.toString(), option || {});
-    },
+    prop: prop,
+    p: prop(),
+    pr: prop({ required: true }),
+    pd: defaultValue => prop({ default: defaultValue }),
     watch: function (option: string | WatchOption): PropertyDecorator {
         return (target, propertyKey) => defineWatch(target, propertyKey.toString(),
             typeof option === "string" ? { name: option } : option);
