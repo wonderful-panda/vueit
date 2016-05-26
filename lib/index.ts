@@ -31,9 +31,16 @@ const internalHooks = [
     "activate"
 ];
 
+function assign(target: {}, other: {}) {
+    Object.keys(other).forEach(k => {
+        target[k] = other[k];
+    })
+    return target;
+}
+
 function makeComponent(target: Function, option: vuejs.ComponentOption): Function | void {
-    option = Object.assign({}, option);
-    option.name = option.name || target.name;
+    option = assign({}, option);
+    option.name = option.name || target["name"];
     const proto = target.prototype;
     Object.getOwnPropertyNames(proto).filter(name => name !== "constructor").forEach(name => {
         // hooks
@@ -88,7 +95,7 @@ function defineProp(target: Object, propertyKey: string, option: vuejs.PropOptio
     else {
         const type = Reflect.getOwnMetadata(DesignTypeKey, target, propertyKey);
         if ([String, Number, Boolean, Function, Array].indexOf(type) > -1) {
-            option = Object.assign({ type }, option);
+            option = assign({ type }, option);
         }
     }
     getAnnotatedOptions(target).props[propertyKey] = option;
