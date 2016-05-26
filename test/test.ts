@@ -121,7 +121,7 @@ describe("vueit", function () {
             after(function () {
                 Vue.config.silent = false;
             });
-            it("values of design types", function () {
+            it("values of design types are accepted", function () {
                 const root = createComponent(Root, {}, {
                     str: "s", num: 1, bool: true, arr: [1, 2, 3], func: v => v * 2, withoutCheck: "s", mismatchType: "s"
                 });
@@ -135,7 +135,7 @@ describe("vueit", function () {
                 assert(c.mismatchType === undefined, "rejected because of wrong validator");
             });
 
-            it("values of other types", function () {
+            it("values of other types are rejected", function () {
                 const root = createComponent(Root, {}, {
                     str: 1, num: "s", bool: 1, arr: 1, func: 1, withoutCheck: 1, mismatchType: 1
                 });
@@ -160,7 +160,7 @@ describe("vueit", function () {
                 return this.value * 2;
             }
         };
-        it("basic", function () {
+        it("methods are registered as 'methods'", function () {
             const c = createComponent(Base);
             assert(c.$interpolate("{{ twice() }}") === "2");
             c.$destroy();
@@ -181,7 +181,7 @@ describe("vueit", function () {
                 this.value = value.toLowerCase();
             }
         }
-        it("basic", function () {
+        it("properties with get/set are registered as 'computed'", function () {
             const c = createComponent(Base, {}, { value: "old" });
             assert(c.upper === "OLD");
             c.upper = "NEW";
@@ -207,11 +207,14 @@ describe("vueit", function () {
                 this.messages.push(msg);
             }
         }
-        it("basic", function () {
+        it("methods annotated by @watch are called when data changed", function () {
             const c = createComponent(Base);
             c.value = 2;
             c.value = 3;
             assert.deepEqual(c.history, [[2, 1], [3, 2]]);
+        });
+        it("methods annotated by @on are called when specified event emitted", function () {
+            const c = createComponent(Base);
             c.$emit("message", "hello");
             assert.deepEqual(c.messages, ["hello"]);
         });
