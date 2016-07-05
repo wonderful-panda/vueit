@@ -1,6 +1,6 @@
 {
   "name": "vueit",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Decorators to make vuejs component from typescript class",
   "main": "dist/index.js",
   "scripts": {
