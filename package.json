@@ -4,6 +4,7 @@
   "description": "Decorators to make vuejs component from typescript class",
   "main": "dist/index.js",
   "scripts": {
+    "typings": "typings install",
     "build": "tsc --project tsconfig.dist.json",
     "test": "mocha --compilers ts:espower-typescript/guess test/**/*.ts",
     "testw": "mocha --compilers ts:espower-typescript/guess test/**/*.ts --watch"
