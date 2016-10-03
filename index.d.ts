@@ -1,3 +1,5 @@
+import * as Vue from "vue";
+
 declare namespace vueit {
     interface WatchOption {
         name: string;
@@ -6,13 +8,12 @@ declare namespace vueit {
     }
 
     interface Static {
-        component: (option?: vuejs.ComponentOption) => ClassDecorator;
-        prop: (option?: vuejs.PropOption) => PropertyDecorator;
+        component: (option?: Vue.ComponentOptions<Vue>) => ClassDecorator;
+        prop: (option?: Vue.PropOptions) => PropertyDecorator;
         p: PropertyDecorator;
         pr: PropertyDecorator;
         pd: (defaultValue: any) => PropertyDecorator;
         watch: (option: string|WatchOption) => PropertyDecorator;
-        on: (name: string) => PropertyDecorator;
     }
 }
 

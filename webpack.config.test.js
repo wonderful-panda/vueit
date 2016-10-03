@@ -5,7 +5,9 @@ module.exports = {
     context: path.join(__dirname, "test"),
     entry: "./test.ts",
     target: "node",
-    externals: [nodeExternals()],
+    externals: [nodeExternals({
+        whitelist: ["vue"]
+    })],
     output: {
         path: path.join(__dirname, "test/dist"),
         filename: "build.js"
@@ -13,7 +15,10 @@ module.exports = {
     devtool: 'source-map',
     resolve: {
         extensions: ["", ".ts", ".js"],
-        root: path.join(__dirname, "test")
+        root: path.join(__dirname, "test"),
+        alias: {
+            vue: "vue/dist/vue.js"
+        }
     },
     module: {
         loaders: [
