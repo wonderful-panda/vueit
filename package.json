@@ -4,7 +4,6 @@
   "description": "Decorators to make vuejs component from typescript class",
   "main": "dist/index.js",
   "scripts": {
-    "typings": "typings install",
     "build": "tsc --project tsconfig.dist.json",
     "test": "mocha --compilers ts:espower-typescript/guess test/**/*.ts",
     "testw": "mocha --compilers ts:espower-typescript/guess test/**/*.ts --watch"
@@ -12,12 +11,16 @@
   "author": "Iwata Hidetaka",
   "license": "MIT",
   "devDependencies": {
+    "@types/jsdom": "^2.0.29",
+    "@types/lodash": "^4.14.36",
+    "@types/mocha": "^2.2.32",
+    "@types/power-assert": "^1.4.29",
+    "@types/vue": "^1.0.30",
     "espower-typescript": "^5.0.1",
     "jsdom": "^9.0.0",
     "mocha": "^2.4.5",
     "power-assert": "^1.4.0",
-    "typescript": "^1.8.10",
-    "typings": "^0.8.1"
+    "typescript": "^2.0.3"
   },
   "dependencies": {
     "reflect-metadata": "^0.1.3",
