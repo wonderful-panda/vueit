@@ -1,4 +1,5 @@
 "use strict";
+import "mocha";
 import * as assert from "power-assert";
 import * as Vue from "vue";
 import { component, prop, p, pd, watch, on } from "../lib/index";

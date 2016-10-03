@@ -5,8 +5,8 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc --project tsconfig.dist.json",
-    "test": "mocha --compilers ts:espower-typescript/guess test/**/*.ts",
-    "testw": "mocha --compilers ts:espower-typescript/guess test/**/*.ts --watch"
+    "test": "mocha-webpack --webpack-config webpack.config.test.js test/**/*.ts",
+    "testw": "mocha-webpack --webpack-config webpack.config.test.js test/**/*.ts -w"
   },
   "author": "Iwata Hidetaka",
   "license": "MIT",
@@ -16,11 +16,15 @@
     "@types/mocha": "^2.2.32",
     "@types/power-assert": "^1.4.29",
     "@types/vue": "^1.0.30",
-    "espower-typescript": "^5.0.1",
     "jsdom": "^9.0.0",
     "mocha": "^2.4.5",
+    "mocha-webpack": "^0.6.0",
     "power-assert": "^1.4.0",
-    "typescript": "^2.0.3"
+    "ts-loader": "^0.8.2",
+    "typescript": "^2.0.3",
+    "webpack": "^1.13.2",
+    "webpack-espower-loader": "^1.0.1",
+    "webpack-node-externals": "^1.4.3"
   },
   "dependencies": {
     "reflect-metadata": "^0.1.3",
