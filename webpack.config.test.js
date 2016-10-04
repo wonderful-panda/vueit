@@ -1,13 +1,8 @@
 var path = require("path");
-var nodeExternals = require("webpack-node-externals");
 
 module.exports = {
     context: path.join(__dirname, "test"),
     entry: "./test.ts",
-    target: "node",
-    externals: [nodeExternals({
-        whitelist: ["vue"]
-    })],
     output: {
         path: path.join(__dirname, "test/dist"),
         filename: "build.js"
@@ -22,7 +17,8 @@ module.exports = {
     },
     module: {
         loaders: [
-            { test: /\.ts$/, loader: "ts-loader" },
+            { test: /\.ts$/, loader: "babel-loader?presets[]=es2015!ts-loader" },
+            { test: /\.json$/, loader: "json-loader" },
         ],
         postLoaders: [
             { test: /test\.ts$/, loader: "webpack-espower-loader" },

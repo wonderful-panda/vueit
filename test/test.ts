@@ -1,10 +1,6 @@
 ///<reference types="mocha" />
 "use strict";
-import "reflect-metadata";
 import * as assert from "power-assert";
-import { jsdom } from "jsdom";
-global["document"] = jsdom(`<html><body /></html>`);
-global["window"] = document.defaultView;
 import * as Vue from "vue";
 import { component, prop, p, pd, watch } from "../lib/index";
 
