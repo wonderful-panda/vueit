@@ -4,23 +4,33 @@ Decorators to make vuejs component from typescript class.
 
 based on vue-class-component (https://github.com/vuejs/vue-class-component)
 
+## Requirement
+
+Vue >= 2.0.1
+
 ## Example
 
 ```ts
-import {component, prop, p, pr, watch, on} from "vueit";
+import {component, prop, p, pr, watch} from "vueit";
+
+interface MyComponentData {
+    msg: String;
+}
 
 @component({
     template: `<div>...</div>`
 })
 class MyComponent extends Vue {
-    // data member must be declared as a property (because compiler must know it)
-    msg: string;
-    data() {
+    // It's recommended to declare $data explicitly.
+    // This makes data() and data member access safe.
+    $data: MyComponentData;
+
+    data(): MyComponentData {
         return { msg: "hello, world" };
     }
     // properties marked by @prop() will be props
     // if "emitDecoratorMetadata" is true, type validation also be set.
-    // @p / @pr are shorthand of @prop() / @prop({ require: true })
+    // @p / @pr are shorthand of @prop() / @prop({ required: true })
     @prop()
     prop1: string;
 
@@ -36,21 +46,16 @@ class MyComponent extends Vue {
     }
     // methods with unknown name are registered as "methods"
     greet() {
-        console.log(this.msg);
+        console.log(this.$data.msg);
     }
     // properties with getter and/or setter will be registered to "computed"
     get computedMsg() {
-        return `computed ${this.msg}`;
+        return `computed ${this.$data.msg}`;
     }
     // @watch() will register decorated method to "watch"
     @watch("msg")
     onMsgChanged(value: string, oldValue: string) {
         console.log("msg changed!");
-    }
-    // @on() will register decorated method to "events"
-    @on("bye")
-    sayGoodBye() {
-        console.log("goodbye!");
     }
 }
 ```
