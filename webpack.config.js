@@ -7,7 +7,7 @@ module.exports = {
         library: "vueit",
         libraryTarget: "umd",
         path: path.join(__dirname, "dist"),
-        filename: "build.js"
+        filename: "index.js"
     },
     devtool: 'source-map',
     resolve: {
