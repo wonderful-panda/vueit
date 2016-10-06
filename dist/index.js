@@ -71,22 +71,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var AnnotatedOptionsKey = "vue-component-decorator:options";
 	var DesignTypeKey = "design:type";
-	/*
-	  data?: Object | ((this: V) => Object);
-	  el?: Element | String;
-	  render?(this: V, createElement: $createElement): VNode;
-	  beforeCreate?(this: V): void;
-	  created?(this: V): void;
-	  beforeDestroy?(this: V): void;
-	  destroyed?(this: V): void;
-	  beforeMount?(this: V): void;
-	  mounted?(this: V): void;
-	  beforeUpdate?(this: V): void;
-	  updated?(this: V): void;
-	}
-	
-	
-	 * */
 	var internalHooks = ["data", "render", "beforeCreate", "created", "beforeMount", "mounted", "beforeUpdate", "updated", "activated", "deactivated", "beforeDestroy", "destroyed"];
 	function assign(target, other) {
 	    Object.keys(other).forEach(function (k) {
@@ -97,6 +81,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	function makeComponent(target, option) {
 	    option = assign({}, option);
 	    option.name = option.name || target["name"];
+	    // if option.template is precompiled template,
+	    // set `render` and `staticRenderFns` instead of `template`
+	    if (option.template && option.template["render"]) {
+	        var ct = option.template;
+	        option.render = ct.render;
+	        option.staticRenderFns = ct.staticRenderFns;
+	        delete option.template;
+	    }
+	    ;
 	    var proto = target.prototype;
 	    Object.getOwnPropertyNames(proto).filter(function (name) {
 	        return name !== "constructor";
