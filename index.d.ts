@@ -1,19 +1,14 @@
 import * as Vue from "vue";
+import * as types from "./types";
 
 declare namespace vueit {
-    interface WatchOption {
-        name: string;
-        deep?: boolean;
-        immediate?: boolean;
-    }
-
     interface Static {
-        component: (option?: Vue.ComponentOptions<Vue>) => ClassDecorator;
+        component: (option?: types.ComponentOptions) => ClassDecorator;
         prop: (option?: Vue.PropOptions) => PropertyDecorator;
         p: PropertyDecorator;
         pr: PropertyDecorator;
         pd: (defaultValue: any) => PropertyDecorator;
-        watch: (option: string|WatchOption) => PropertyDecorator;
+        watch: (option: string|types.WatchOptions) => PropertyDecorator;
     }
 }
 

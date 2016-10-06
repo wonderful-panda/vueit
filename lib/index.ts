@@ -1,11 +1,6 @@
 import "reflect-metadata";
 import * as Vue from "vue";
-
-interface WatchOption {
-    name: string;
-    deep?: boolean;
-    immediate?: boolean;
-}
+import * as types from "../types";
 
 class AnnotatedOptions {
     props: { [key: string]: Vue.PropOptions } = {};
@@ -38,9 +33,17 @@ function assign(target: {}, other: {}) {
     return target;
 }
 
-function makeComponent(target: Function, option: Vue.ComponentOptions<Vue>): Function | void {
+function makeComponent(target: Function, option: types.ComponentOptions): Function | void {
     option = assign({}, option);
     option.name = option.name || target["name"];
+    // if option.template is precompiled template,
+    // set `render` and `staticRenderFns` instead of `template`
+    if (option.template && option.template["render"]) {
+        const ct = option.template as types.CompiledTemplate;
+        option.render = ct.render;
+        option.staticRenderFns = ct.staticRenderFns;
+        delete option.template;
+    };
     const proto = target.prototype;
     Object.getOwnPropertyNames(proto).filter(name => name !== "constructor").forEach(name => {
         // hooks
@@ -99,7 +102,7 @@ function defineProp(target: Object, propertyKey: string, option: Vue.PropOptions
     getAnnotatedOptions(target).props[propertyKey] = option;
 }
 
-function defineWatch(target: Object, propertyKey: string, option: WatchOption) {
+function defineWatch(target: Object, propertyKey: string, option: types.WatchOptions) {
     const descriptor = Object.getOwnPropertyDescriptor(target, propertyKey);
     if (typeof descriptor.value !== "function") {
         // TODO: show warning
@@ -117,14 +120,14 @@ const prop = function (option?: Vue.PropOptions): PropertyDecorator {
 };
 
 const vueit = {
-    component: function (option?: Vue.ComponentOptions<Vue>): ClassDecorator {
+    component: function (option?: types.ComponentOptions): ClassDecorator {
         return target => makeComponent(target, option || {});
     },
     prop: prop,
     p: prop(),
     pr: prop({ required: true }),
     pd: defaultValue => prop({ default: defaultValue }),
-    watch: function (option: string | WatchOption): PropertyDecorator {
+    watch: function (option: string | types.WatchOptions): PropertyDecorator {
         return (target, propertyKey) => defineWatch(target, propertyKey.toString(),
             typeof option === "string" ? { name: option } : option);
     }
