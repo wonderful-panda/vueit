@@ -16,23 +16,6 @@ class AnnotatedOptions {
 const AnnotatedOptionsKey = "vue-component-decorator:options";
 const DesignTypeKey = "design:type";
 
-/*
-  data?: Object | ((this: V) => Object);
-  el?: Element | String;
-  render?(this: V, createElement: $createElement): VNode;
-  beforeCreate?(this: V): void;
-  created?(this: V): void;
-  beforeDestroy?(this: V): void;
-  destroyed?(this: V): void;
-  beforeMount?(this: V): void;
-  mounted?(this: V): void;
-  beforeUpdate?(this: V): void;
-  updated?(this: V): void;
-}
-
-
- * */
-
 const internalHooks = [
     "data",
     "render",
