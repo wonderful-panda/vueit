@@ -7,8 +7,20 @@
     "build": "webpack",
     "test": "karma start"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wonderful-panda/vueit.git"
+  },
+  "keywords": [
+    "vue",
+    "typescript",
+    "decorator"
+  ],
   "author": "Iwata Hidetaka",
   "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/wonderful-panda/vueit/issues"
+  },
   "devDependencies": {
     "@types/lodash": "^4.14.36",
     "@types/mocha": "^2.2.32",
