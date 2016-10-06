@@ -5,13 +5,26 @@ import * as Vue from "vue";
 import { component, prop, p, pd, watch } from "../lib/index";
 
 
+const orgConsoleError = console.error;
 describe("vueit", function () {
 
     let components: any[];
+    let warns: string[];
     beforeEach(function () {
         components = [];
+        warns = [];
+        const head = "[Vue warn]: ";
+        console.error = function(msg: string) {
+            if (msg.startsWith(head)) {
+                warns.push(msg.substr(head.length));
+            }
+            else {
+                orgConsoleError(msg);
+            }
+        }
     });
     afterEach(function () {
+        console.error = orgConsoleError;
         components.forEach(c => { c.$destroy(); });
         assert(components.length === 0);
     });
@@ -29,7 +42,7 @@ describe("vueit", function () {
     }
 
     describe("hooks", function () {
-        @component()
+        @component({ template: `<div>test</div>` })
         class Base extends Vue {
             created_: boolean;
             destroyed_: boolean;
@@ -64,7 +77,7 @@ describe("vueit", function () {
     });
 
     describe("props", function () {
-        @component()
+        @component({ template: `<div>test</div>` })
         class Basic extends Vue {
             @p msg1: string;
             @pd("value2default") msg2: string;
@@ -92,7 +105,7 @@ describe("vueit", function () {
             assert(c.msg3 === "value3");
         });
 
-        @component()
+        @component({ template: `<div>test</div>` })
         class Validation extends Vue {
             @p str: string;
             @p num: number;
@@ -113,10 +126,6 @@ describe("vueit", function () {
         });
 
         describe("validation - auto validation from design type", function () {
-            Vue.config.silent = true;
-            after(function () {
-                Vue.config.silent = false;
-            });
             it("values of design types are accepted", function () {
                 const root = createComponent(Root, {}, {
                     str: "s", num: 1, bool: true, arr: [1, 2, 3], func: v => v * 2, withoutCheck: "s", mismatchType: "s"
@@ -128,29 +137,29 @@ describe("vueit", function () {
                 assert.deepEqual(c.arr, [1, 2, 3]);
                 assert(c.func(1) === 2);
                 assert(c.withoutCheck === "s");
-                // this assert fails now, maybe because bug of vue 2.0.1
-                // assert(c.mismatchType === undefined, "rejected because of wrong validator");
+                assert(c.mismatchType === "s");
+                assert(warns.length === 1);
+                assert(warns[0].startsWith(`Invalid prop: type check failed for prop "mismatchType"`));
             });
 
-            it.skip("values of other types are rejected", function () {
+            it("values of other types are rejected", function () {
                 // this assert fails now, maybe because bug of vue 2.0.1
                 const root = createComponent(Root, {}, {
                     str: 1, num: "s", bool: 1, arr: 1, func: 1, withoutCheck: 1, mismatchType: 1
                 });
-                const c = root.$refs["target"] as Validation;
-                assert(c.str === undefined);
-                assert(c.num === undefined);
-                assert(c.bool === undefined);
-                assert(c.arr === undefined);
-                assert(c.func === undefined);
-                assert(c.withoutCheck as any === 1, "accepted because of null validator");
-                assert(c.mismatchType as any === 1, "accepted because of wrong validator");
+                assert(warns.length === 5);
+                const [w1, w2, w3, w4, w5] = warns;
+                assert(w1.startsWith(`Invalid prop: type check failed for prop "str"`));
+                assert(w2.startsWith(`Invalid prop: type check failed for prop "num"`));
+                assert(w3.startsWith(`Invalid prop: type check failed for prop "bool"`));
+                assert(w4.startsWith(`Invalid prop: type check failed for prop "arr"`));
+                assert(w5.startsWith(`Invalid prop: type check failed for prop "func"`));
             });
         });
     });
 
     describe("methods", function () {
-        @component()
+        @component({ template: `<div>test</div>` })
         class Base extends Vue {
             value: number;
             data(): any { return { value: 1 }; }
@@ -166,7 +175,7 @@ describe("vueit", function () {
     });
 
     describe("computed", function () {
-        @component()
+        @component({ template: `<div>test</div>` })
         class Base extends Vue {
             value: string;
             data() {
@@ -188,7 +197,7 @@ describe("vueit", function () {
     });
 
     describe("watch", function () {
-        @component()
+        @component({ template: `<div>test</div>` })
         class Base extends Vue {
             value: number;
             history: any[];
