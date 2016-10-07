@@ -8,7 +8,7 @@ class AnnotatedOptions {
     events: { [key: string]: (...args: any[]) => boolean | void } = {};
 }
 
-const AnnotatedOptionsKey = "vue-component-decorator:options";
+const AnnotatedOptionsKey = "vueit:component-options";
 const DesignTypeKey = "design:type";
 
 const internalHooks = [
