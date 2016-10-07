@@ -4,7 +4,7 @@ import * as types from "../types";
 
 class AnnotatedOptions {
     props: { [key: string]: Vue.PropOptions } = {};
-    watch: { [key: string]: Vue.WatchOptions & { handler: any } } = {};
+    watch: { [key: string]: Vue.WatchOptions & { handler: Vue.WatchHandler<Vue> } } = {};
     events: { [key: string]: (...args: any[]) => boolean | void } = {};
 }
 
@@ -26,24 +26,19 @@ const internalHooks = [
     "destroyed"
 ];
 
-function assign(target: {}, other: {}) {
-    Object.keys(other).forEach(k => {
-        target[k] = other[k];
-    })
-    return target;
-}
-
-function makeComponent(target: Function, option: types.ComponentOptions): Function | void {
-    option = assign({}, option);
-    option.name = option.name || target["name"];
-    // if option.template is precompiled template,
+function makeComponent(target: Function, orgOption: types.ComponentOptions): Function | void {
+    const option: Vue.ComponentOptions<Vue> = {};
+    const o = Object.assign({}, orgOption);
+    option.name = o.name || target["name"];
+    // if o.template is precompiled template,
     // set `render` and `staticRenderFns` instead of `template`
-    if (option.template && option.template["render"]) {
-        const ct = option.template as types.CompiledTemplate;
+    if (o.template && typeof o.template["render"] !== "undefined") {
+        const ct = o.template as types.CompiledTemplate;
         option.render = ct.render;
         option.staticRenderFns = ct.staticRenderFns;
-        delete option.template;
+        delete o.template;
     };
+    Object.assign(option, o);
     const proto = target.prototype;
     Object.getOwnPropertyNames(proto).filter(name => name !== "constructor").forEach(name => {
         // hooks
@@ -96,7 +91,7 @@ function defineProp(target: Object, propertyKey: string, option: Vue.PropOptions
     else {
         const type = Reflect.getOwnMetadata(DesignTypeKey, target, propertyKey);
         if ([String, Number, Boolean, Function, Array].indexOf(type) > -1) {
-            option = assign({ type }, option);
+            option = Object.assign({ type }, option);
         }
     }
     getAnnotatedOptions(target).props[propertyKey] = option;
