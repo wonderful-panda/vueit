@@ -3,7 +3,7 @@ import * as types from "./types";
 
 declare namespace vueit {
     interface Static {
-        component: (option?: types.ComponentOptions) => ClassDecorator;
+        component<V extends Vue>(option?: types.ComponentOptions<V>): ClassDecorator;
         prop: (option?: Vue.PropOptions) => PropertyDecorator;
         p: PropertyDecorator;
         pr: PropertyDecorator;

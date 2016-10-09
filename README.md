@@ -13,10 +13,15 @@ Vue >= 2.0.1
 ```ts
 import {component, prop, p, pr, watch} from "vueit";
 
-@component({
-    template: `<div>...</div>`
+@component<MyComponent>({
+    template: `<div>...</div>`,
+    beforeDestroy() {
+        // Now (typescript >= 2.0), you can access props/data of MyComponent here.
+        console.log("beforeDestroy", this.msg);
+    }
 })
 class MyComponent extends Vue {
+    msg: string;
     data() {
         return { msg: "hello, world" };
     }
@@ -32,9 +37,9 @@ class MyComponent extends Vue {
     @p prop3: string;
     @pr prop4: string;
 
-    // methods with known name(data, created, ready, etc) will be registered as hooks
-    ready() {
-        console.log("ready!");
+    // methods with known name(data, created, mounted, etc) will be registered as hooks
+    mounted() {
+        console.log("mounted!");
     }
     // methods with unknown name are registered as "methods"
     greet() {
@@ -66,8 +71,11 @@ const MyComponent = Vue.extend({
         prop3: String,
         prop4: { require: true, type: String }
     },
-    ready: function () {
-        console.log("ready!");
+    mounted: function () {
+        console.log("mounted!");
+    },
+    beforeDestroy: function () {
+        console.log("beforeDestroy", this.msg);
     },
     methods: {
         greet: function() {
@@ -142,23 +150,36 @@ class MyComponent extends Vue {
 
 ### Use Precompiled template
 
-`template` can accept not only plain string, but also output from `vue-template-compiler`.
+You can pass output from `vue-template-compiler` to `compiledTemplate` directly.
 
 ```ts
 @component({
-    template : { render: ..., staticRenderFns: [...] }
+    compiledTemplate : { render: ..., staticRenderFns: [...] }
 })
 class MyComponent extends Vue {
     ...
 }
 ```
 
-This means you can precompile template by bundler like webpack.
+In other words, if you have installed appropriate plugin for bundler, you can precompile template in bundle process.
 
 ```ts
-// vue-template-compiler-loader must be installed
+// Example for webpack and vue-template-compiler-loader
 @component({
-    template: require("vue-template-compiler!./mycomponent.html")
+    compiledTemplate: require("vue-template-compiler!./mycomponent.html")
+})
+class MyComponent extends Vue {
+    ...
+}
+```
+
+You also can do like below. `compiledTemplate` is just shorthand.
+
+```ts
+const { render, staticRenderFns } = require("vue-template-compiler!./mycomponent.html");
+@component({
+    render,
+    staticRenderFns
 })
 class MyComponent extends Vue {
     ...

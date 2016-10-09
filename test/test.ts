@@ -3,6 +3,22 @@
 import * as assert from "power-assert";
 import * as Vue from "vue";
 import { component, prop, p, pd, watch } from "../lib/index";
+import * as compiler from "vue-template-compiler";
+import * as types from "../types";
+
+function compileTemplate(source: string) {
+    const { render, staticRenderFns, errors } = compiler.compile(source);
+    if (errors.length > 0) {
+        throw errors;
+    }
+    const toFunction = (body: string) => {
+        return Function(body) as (h: typeof Vue.prototype.$createElement) => Vue.VNode;
+    }
+    return {
+        render: toFunction(render),
+        staticRenderFns: staticRenderFns.map(toFunction)
+    } as types.CompiledTemplate;
+}
 
 
 const orgConsoleError = console.error;
@@ -218,6 +234,41 @@ describe("vueit", function () {
                 assert.deepEqual(c.history, [[2, 1]]);
                 done();
             }, 100);
+        });
+    });
+
+    describe("vue 2.0 components", function () {
+        it("component with render method", function() {
+            @component()
+            class MyComponent extends Vue {
+                @p prop1: string;
+                render(h) {
+                    return h("div", [ this.prop1 ]);
+                }
+            };
+            const c = createComponent(MyComponent, { prop1: "test" });
+            assert(c.$el.outerHTML === "<div>test</div>");
+        });
+        it("component with compiledTemplate", function() {
+            @component({
+                compiledTemplate: compileTemplate("<div>{{ prop1 }}</div>")
+            })
+            class MyComponent extends Vue {
+                @p prop1: string;
+            };
+            const c = createComponent(MyComponent, { prop1: "test" });
+            assert(c.$el.outerHTML === "<div>test</div>");
+        });
+        it("component with render and staticRenderFns", function() {
+            const { render, staticRenderFns } = compileTemplate("<div>{{ prop1 }}</div>");
+            @component({
+                render, staticRenderFns
+            })
+            class MyComponent extends Vue {
+                @p prop1: string;
+            };
+            const c = createComponent(MyComponent, { prop1: "test" });
+            assert(c.$el.outerHTML === "<div>test</div>");
         });
     });
 });

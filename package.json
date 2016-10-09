@@ -39,6 +39,7 @@
     "power-assert": "^1.4.0",
     "ts-loader": "^0.8.2",
     "typescript": "^2.0.3",
+    "vue-template-compiler": "^2.0.1",
     "webpack": "^1.13.2",
     "webpack-espower-loader": "^1.0.1"
   },

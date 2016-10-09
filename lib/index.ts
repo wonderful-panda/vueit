@@ -26,19 +26,16 @@ const internalHooks = [
     "destroyed"
 ];
 
-function makeComponent(target: Function, orgOption: types.ComponentOptions): Function | void {
-    const option: Vue.ComponentOptions<Vue> = {};
-    const o = Object.assign({}, orgOption);
-    option.name = o.name || target["name"];
-    // if o.template is precompiled template,
-    // set `render` and `staticRenderFns` instead of `template`
-    if (o.template && typeof o.template["render"] !== "undefined") {
-        const ct = o.template as types.CompiledTemplate;
-        option.render = ct.render;
-        option.staticRenderFns = ct.staticRenderFns;
-        delete o.template;
+function makeComponent<V extends Vue>(target: Function, option: types.ComponentOptions<V>): Function | void {
+    option = Object.assign({}, option);
+    option.name = option.name || target["name"];
+    if (option.compiledTemplate) {
+        option.render = option.compiledTemplate.render;
+        option.staticRenderFns = option.compiledTemplate.staticRenderFns;
+        if (option.template) {
+            delete option.template;
+        }
     };
-    Object.assign(option, o);
     const proto = target.prototype;
     Object.getOwnPropertyNames(proto).filter(name => name !== "constructor").forEach(name => {
         // hooks
@@ -115,7 +112,7 @@ const prop = function (option?: Vue.PropOptions): PropertyDecorator {
 };
 
 const vueit = {
-    component: function (option?: types.ComponentOptions): ClassDecorator {
+    component<V extends Vue>(option?: types.ComponentOptions<V>): ClassDecorator {
         return target => makeComponent(target, option || {});
     },
     prop: prop,
