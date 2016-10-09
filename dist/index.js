@@ -69,25 +69,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.events = {};
 	};
 	
-	var AnnotatedOptionsKey = "vue-component-decorator:options";
+	var AnnotatedOptionsKey = "vueit:component-options";
 	var DesignTypeKey = "design:type";
 	var internalHooks = ["data", "render", "beforeCreate", "created", "beforeMount", "mounted", "beforeUpdate", "updated", "activated", "deactivated", "beforeDestroy", "destroyed"];
-	function assign(target, other) {
-	    Object.keys(other).forEach(function (k) {
-	        target[k] = other[k];
-	    });
-	    return target;
-	}
 	function makeComponent(target, option) {
-	    option = assign({}, option);
+	    option = Object.assign({}, option);
 	    option.name = option.name || target["name"];
-	    // if option.template is precompiled template,
-	    // set `render` and `staticRenderFns` instead of `template`
-	    if (option.template && option.template["render"]) {
-	        var ct = option.template;
-	        option.render = ct.render;
-	        option.staticRenderFns = ct.staticRenderFns;
-	        delete option.template;
+	    if (option.compiledTemplate) {
+	        option.render = option.compiledTemplate.render;
+	        option.staticRenderFns = option.compiledTemplate.staticRenderFns;
+	        if (option.template) {
+	            delete option.template;
+	        }
 	    }
 	    ;
 	    var proto = target.prototype;
@@ -135,7 +128,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if ("type" in option) {} else {
 	        var type = Reflect.getOwnMetadata(DesignTypeKey, target, propertyKey);
 	        if ([String, Number, Boolean, Function, Array].indexOf(type) > -1) {
-	            option = assign({ type: type }, option);
+	            option = Object.assign({ type: type }, option);
 	        }
 	    }
 	    getAnnotatedOptions(target).props[propertyKey] = option;
@@ -163,6 +156,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return makeComponent(target, option || {});
 	        };
 	    },
+	
 	    prop: prop,
 	    p: prop(),
 	    pr: prop({ required: true }),
