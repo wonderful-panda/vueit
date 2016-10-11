@@ -80,18 +80,22 @@ function getAnnotatedOptions(target: Object): AnnotatedOptions {
     return ann;
 }
 
-function defineProp(target: Object, propertyKey: string, option: Vue.PropOptions) {
+function trySetPropTypeValidation(opts: Vue.PropOptions, type): void {
+    if (typeof opts.type !== "undefined") {
+        return;
+    }
+    if ([String, Number, Boolean, Function, Array].indexOf(type) <= -1) {
+        return;
+    }
+    opts.type = type;
+}
+
+function defineProp(target: Object, propertyKey: string, options: Vue.PropOptions) {
+    options = Object.assign({}, options);
     // detect design type and set prop validation
-    if ("type" in option) {
-        // type specified explicitly, nothing to do
-    }
-    else {
-        const type = Reflect.getOwnMetadata(DesignTypeKey, target, propertyKey);
-        if ([String, Number, Boolean, Function, Array].indexOf(type) > -1) {
-            option = Object.assign({ type }, option);
-        }
-    }
-    getAnnotatedOptions(target).props[propertyKey] = option;
+    const type = Reflect.getOwnMetadata(DesignTypeKey, target, propertyKey);
+    trySetPropTypeValidation(options, type);
+    getAnnotatedOptions(target).props[propertyKey] = options;
 }
 
 function defineWatch(target: Object, propertyKey: string, option: types.WatchOptions) {
@@ -107,18 +111,38 @@ function defineWatch(target: Object, propertyKey: string, option: types.WatchOpt
     };
 }
 
-const prop = function (option?: Vue.PropOptions): PropertyDecorator {
-    return (target, propertyKey) => defineProp(target, propertyKey.toString(), option || {});
+const prop = <types.PropType>function (...args): PropertyDecorator {
+    if (args.length <= 1) {
+        // Used with argument list. Like `@prop()` or `@prop({ ... })`
+        const options = <Vue.PropOptions>(args[0] || {});
+        return (target, propertyKey) => defineProp(target, propertyKey.toString(), options);
+    }
+    else {
+        // Used without argument list. Like `@prop`
+        const target = args[0];
+        const propertyKey = args[1].toString();
+        defineProp(target, propertyKey, {});
+    }
 };
+prop.required = function (...args): PropertyDecorator {
+    if (args.length <= 1) {
+        // Used with argument list. Like `@prop.required()` or `@prop.required({ ... })`
+        return prop(Object.assign({ required: true }, args[0]));
+    }
+    else {
+        // Used without argument list. Like `@prop.required`
+        return prop({ required: true }).apply(null, args);
+    }
+}
+prop.default = function (defaultValue: any, options?: Vue.PropOptions): PropertyDecorator {
+    return prop(Object.assign({ default: defaultValue }, options));
+}
 
 const vueit = {
     component<V extends Vue>(option?: types.ComponentOptions<V>): ClassDecorator {
         return target => makeComponent(target, option || {});
     },
     prop: prop,
-    p: prop(),
-    pr: prop({ required: true }),
-    pd: defaultValue => prop({ default: defaultValue }),
     watch: function (option: string | types.WatchOptions): PropertyDecorator {
         return (target, propertyKey) => defineWatch(target, propertyKey.toString(),
             typeof option === "string" ? { name: option } : option);

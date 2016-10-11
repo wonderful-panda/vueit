@@ -2,7 +2,7 @@
 "use strict";
 import * as assert from "power-assert";
 import * as Vue from "vue";
-import { component, prop, p, pd, watch } from "../lib/index";
+import { component, prop, watch } from "../lib/index";
 import * as compiler from "vue-template-compiler";
 import * as types from "../types";
 
@@ -95,8 +95,8 @@ describe("vueit", function () {
     describe("props", function () {
         @component({ template: `<div>test</div>` })
         class Basic extends Vue {
-            @p msg1: string;
-            @pd("value2default") msg2: string;
+            @prop msg1: string;
+            @prop.default("value2default") msg2: string;
         }
         it("basic", function () {
             const c = createComponent(Basic, { msg1: "value1" });
@@ -106,13 +106,14 @@ describe("vueit", function () {
 
         it("basic - override default value", function () {
             const c = createComponent(Basic, { msg2: "value2" });
+            assert(typeof c.msg1 === "undefined");
             assert(c.msg2 === "value2");
         });
 
         @component()
         class Extended extends Basic {
-            @pd("value2extended") msg2: string;
-            @p msg3: string;
+            @prop.default("value2extended") msg2: string;
+            @prop msg3: string;
         }
         it("extended - props from both Basic and Extended are enabled", function () {
             const c = createComponent(Extended, { msg1: "value1", msg3: "value3" });
@@ -120,28 +121,50 @@ describe("vueit", function () {
             assert(c.msg2 === "value2extended");
             assert(c.msg3 === "value3");
         });
-
-        @component({ template: `<div>test</div>` })
-        class Validation extends Vue {
-            @p str: string;
-            @p num: number;
-            @p bool: boolean;
-            @p arr: number[];
-            @p func: (v: number) => number;
-            @prop({ type: null }) withoutCheck: string;
-            @prop({ type: Number }) mismatchType: string;
-        }
-
-        const Root = Vue.extend({
-            template: `<div>
-                         <target ref="target"
-                           :str="str" :num="num" :bool="bool" :arr="arr" :func="func"
-                           :without-check="withoutCheck" :mismatch-type="mismatchType" />
-                       </div>`,
-            components: { target: Validation }
+        describe("validation - required", function () {
+            @component({ template: `<div>test</div>` })
+            class Validation extends Vue {
+                @prop.required prop1: string;
+                @prop.required() prop2: string;
+                @prop.required({ validator: s => s.startsWith("a") }) prop3: string;
+            }
+            it("warnings are shown when required props are not passed", function() {
+                const c = createComponent(Validation, {});
+                assert(warns.length === 3);
+                const [w1, w2, w3] = warns;
+                assert(/^Missing required .* "prop1"/.test(w1));
+                assert(/^Missing required .* "prop2"/.test(w2));
+                assert(/^Missing required .* "prop3"/.test(w3));
+            });
+            it("warnings are shown when additional valiation fails", function() {
+                const c = createComponent(Validation, { prop1: "apple", prop2: "orange", prop3: "grape" });
+                assert(warns.length === 1);
+                assert(/^Invalid prop: custom validator .* "prop3"/.test(warns[0]));
+            });
         });
 
         describe("validation - auto validation from design type", function () {
+
+            @component({ template: `<div>test</div>` })
+            class Validation extends Vue {
+                @prop str: string;
+                @prop num: number;
+                @prop bool: boolean;
+                @prop arr: number[];
+                @prop func: (v: number) => number;
+                @prop({ type: null }) withoutCheck: string;
+                @prop({ type: Number }) mismatchType: string;
+            }
+
+            const Root = Vue.extend({
+                template: `<div>
+                             <target ref="target"
+                               :str="str" :num="num" :bool="bool" :arr="arr" :func="func"
+                               :without-check="withoutCheck" :mismatch-type="mismatchType" />
+                           </div>`,
+                components: { target: Validation }
+            });
+
             it("values of design types are accepted", function () {
                 const root = createComponent(Root, {}, {
                     str: "s", num: 1, bool: true, arr: [1, 2, 3], func: v => v * 2, withoutCheck: "s", mismatchType: "s"
@@ -155,7 +178,7 @@ describe("vueit", function () {
                 assert(c.withoutCheck === "s");
                 assert(c.mismatchType === "s");
                 assert(warns.length === 1);
-                assert(warns[0].startsWith(`Invalid prop: type check failed for prop "mismatchType"`));
+                assert(/^Invalid prop: type check .* "mismatchType"/.test(warns[0]));
             });
 
             it("values of other types are rejected", function () {
@@ -165,11 +188,11 @@ describe("vueit", function () {
                 });
                 assert(warns.length === 5);
                 const [w1, w2, w3, w4, w5] = warns;
-                assert(w1.startsWith(`Invalid prop: type check failed for prop "str"`));
-                assert(w2.startsWith(`Invalid prop: type check failed for prop "num"`));
-                assert(w3.startsWith(`Invalid prop: type check failed for prop "bool"`));
-                assert(w4.startsWith(`Invalid prop: type check failed for prop "arr"`));
-                assert(w5.startsWith(`Invalid prop: type check failed for prop "func"`));
+                assert(/^Invalid prop: type check .* "str"/.test(w1));
+                assert(/^Invalid prop: type check .* "num"/.test(w2));
+                assert(/^Invalid prop: type check .* "bool"/.test(w3));
+                assert(/^Invalid prop: type check .* "arr"/.test(w4));
+                assert(/^Invalid prop: type check .* "func"/.test(w5));
             });
         });
     });
@@ -241,7 +264,7 @@ describe("vueit", function () {
         it("component with render method", function() {
             @component()
             class MyComponent extends Vue {
-                @p prop1: string;
+                @prop prop1: string;
                 render(h) {
                     return h("div", [ this.prop1 ]);
                 }
@@ -254,7 +277,7 @@ describe("vueit", function () {
                 compiledTemplate: compileTemplate("<div>{{ prop1 }}</div>")
             })
             class MyComponent extends Vue {
-                @p prop1: string;
+                @prop prop1: string;
             };
             const c = createComponent(MyComponent, { prop1: "test" });
             assert(c.$el.outerHTML === "<div>test</div>");
@@ -265,7 +288,7 @@ describe("vueit", function () {
                 render, staticRenderFns
             })
             class MyComponent extends Vue {
-                @p prop1: string;
+                @prop prop1: string;
             };
             const c = createComponent(MyComponent, { prop1: "test" });
             assert(c.$el.outerHTML === "<div>test</div>");
