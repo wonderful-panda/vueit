@@ -26,6 +26,10 @@ const internalHooks = [
     "destroyed"
 ];
 
+function warn(msg: string) {
+    console.warn("[vueit warn]: " + msg);
+}
+
 function makeComponent<V extends Vue>(target: Function, option: types.ComponentOptions<V>): Function | void {
     option = Object.assign({}, option);
     option.name = option.name || target["name"];
@@ -33,6 +37,7 @@ function makeComponent<V extends Vue>(target: Function, option: types.ComponentO
         option.render = option.compiledTemplate.render;
         option.staticRenderFns = option.compiledTemplate.staticRenderFns;
         if (option.template) {
+            warn(`"compiledtemplate" and "template" are exclusive. "template" is ignored: ${ target.name }`)
             delete option.template;
         }
     };
@@ -80,11 +85,14 @@ function getAnnotatedOptions(target: Object): AnnotatedOptions {
     return ann;
 }
 
-function trySetPropTypeValidation(opts: Vue.PropOptions, type): void {
-    if (typeof opts.type !== "undefined") {
+function trySetPropTypeValidation(target: Object, propertyKey: string, opts: Vue.PropOptions, type): void {
+    if ([String, Number, Boolean, Function, Array].indexOf(type) <= -1) {
         return;
     }
-    if ([String, Number, Boolean, Function, Array].indexOf(type) <= -1) {
+    if (typeof opts.type !== "undefined") {
+        if ([String, Number, Boolean, Function, Array].indexOf(<any>opts.type) >= 0 && opts.type !== type) {
+            warn(`specified type validation does not match design type: ${ target.constructor.name }.${ propertyKey }`)
+        }
         return;
     }
     opts.type = type;
@@ -94,14 +102,14 @@ function defineProp(target: Object, propertyKey: string, options: Vue.PropOption
     options = Object.assign({}, options);
     // detect design type and set prop validation
     const type = Reflect.getOwnMetadata(DesignTypeKey, target, propertyKey);
-    trySetPropTypeValidation(options, type);
+    trySetPropTypeValidation(target, propertyKey, options, type);
     getAnnotatedOptions(target).props[propertyKey] = options;
 }
 
 function defineWatch(target: Object, propertyKey: string, option: types.WatchOptions) {
     const descriptor = Object.getOwnPropertyDescriptor(target, propertyKey);
     if (typeof descriptor.value !== "function") {
-        // TODO: show warning
+        warn(`@watch() can decorate only function: ${ target.constructor.name }.${ propertyKey }`)
         return;
     }
     getAnnotatedOptions(target).watch[option.name] = {
