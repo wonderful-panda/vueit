@@ -56,6 +56,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	"use strict";
 	
+	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
 	__webpack_require__(1);
@@ -72,6 +74,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	var AnnotatedOptionsKey = "vueit:component-options";
 	var DesignTypeKey = "design:type";
 	var internalHooks = ["data", "render", "beforeCreate", "created", "beforeMount", "mounted", "beforeUpdate", "updated", "activated", "deactivated", "beforeDestroy", "destroyed"];
+	function warn(msg) {
+	    console.warn("[vueit warn]: " + msg);
+	}
 	function makeComponent(target, option) {
 	    option = Object.assign({}, option);
 	    option.name = option.name || target["name"];
@@ -79,6 +84,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        option.render = option.compiledTemplate.render;
 	        option.staticRenderFns = option.compiledTemplate.staticRenderFns;
 	        if (option.template) {
+	            warn("\"compiledtemplate\" and \"template\" are exclusive. \"template\" is ignored: " + target.name);
 	            delete option.template;
 	        }
 	    }
@@ -123,20 +129,29 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    return ann;
 	}
-	function defineProp(target, propertyKey, option) {
-	    // detect design type and set prop validation
-	    if ("type" in option) {} else {
-	        var type = Reflect.getOwnMetadata(DesignTypeKey, target, propertyKey);
-	        if ([String, Number, Boolean, Function, Array].indexOf(type) > -1) {
-	            option = Object.assign({ type: type }, option);
-	        }
+	function trySetPropTypeValidation(target, propertyKey, opts, type) {
+	    if ([String, Number, Boolean, Function, Array].indexOf(type) <= -1) {
+	        return;
 	    }
-	    getAnnotatedOptions(target).props[propertyKey] = option;
+	    if (typeof opts.type !== "undefined") {
+	        if ([String, Number, Boolean, Function, Array].indexOf(opts.type) >= 0 && opts.type !== type) {
+	            warn("specified type validation does not match design type: " + target.constructor.name + "." + propertyKey);
+	        }
+	        return;
+	    }
+	    opts.type = type;
+	}
+	function defineProp(target, propertyKey, options) {
+	    options = Object.assign({}, options);
+	    // detect design type and set prop validation
+	    var type = Reflect.getOwnMetadata(DesignTypeKey, target, propertyKey);
+	    trySetPropTypeValidation(target, propertyKey, options, type);
+	    getAnnotatedOptions(target).props[propertyKey] = options;
 	}
 	function defineWatch(target, propertyKey, option) {
 	    var descriptor = Object.getOwnPropertyDescriptor(target, propertyKey);
 	    if (typeof descriptor.value !== "function") {
-	        // TODO: show warning
+	        warn("@watch() can decorate only function: " + target.constructor.name + "." + propertyKey);
 	        return;
 	    }
 	    getAnnotatedOptions(target).watch[option.name] = {
@@ -145,10 +160,45 @@ return /******/ (function(modules) { // webpackBootstrap
 	        immediate: option.immediate
 	    };
 	}
-	var prop = function prop(option) {
-	    return function (target, propertyKey) {
-	        return defineProp(target, propertyKey.toString(), option || {});
-	    };
+	var prop = function prop() {
+	    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+	        args[_key] = arguments[_key];
+	    }
+	
+	    if (args.length <= 1) {
+	        var _ret = function () {
+	            // Used with argument list. Like `@prop()` or `@prop({ ... })`
+	            var options = args[0] || {};
+	            return {
+	                v: function v(target, propertyKey) {
+	                    return defineProp(target, propertyKey.toString(), options);
+	                }
+	            };
+	        }();
+	
+	        if ((typeof _ret === "undefined" ? "undefined" : _typeof(_ret)) === "object") return _ret.v;
+	    } else {
+	        // Used without argument list. Like `@prop`
+	        var target = args[0];
+	        var propertyKey = args[1].toString();
+	        defineProp(target, propertyKey, {});
+	    }
+	};
+	prop.required = function () {
+	    for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+	        args[_key2] = arguments[_key2];
+	    }
+	
+	    if (args.length <= 1) {
+	        // Used with argument list. Like `@prop.required()` or `@prop.required({ ... })`
+	        return prop(Object.assign({ required: true }, args[0]));
+	    } else {
+	        // Used without argument list. Like `@prop.required`
+	        return prop({ required: true }).apply(null, args);
+	    }
+	};
+	prop.default = function (defaultValue, options) {
+	    return prop(Object.assign({ default: defaultValue }, options));
 	};
 	var vueit = {
 	    component: function component(option) {
@@ -158,11 +208,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	
 	    prop: prop,
-	    p: prop(),
-	    pr: prop({ required: true }),
-	    pd: function pd(defaultValue) {
-	        return prop({ default: defaultValue });
-	    },
 	    watch: function watch(option) {
 	        return function (target, propertyKey) {
 	            return defineWatch(target, propertyKey.toString(), typeof option === "string" ? { name: option } : option);
