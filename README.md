@@ -11,7 +11,7 @@ Vue >= 2.0.1
 ## Example
 
 ```ts
-import {component, prop, p, pr, watch} from "vueit";
+import {component, prop, watch} from "vueit";
 
 @component<MyComponent>({
     template: `<div>...</div>`,
@@ -25,17 +25,20 @@ class MyComponent extends Vue {
     data() {
         return { msg: "hello, world" };
     }
-    // properties marked by @prop() will be props
-    // if "emitDecoratorMetadata" is true, type validation also be set.
-    // @p / @pr are shorthand of @prop() / @prop({ required: true })
-    @prop()
+    // properties marked by @prop will be props
+    // if "emitDecoratorMetadata" is specified in `tsconfig.json`,
+    // type validation will be automatically set for some types
+    @prop
     prop1: string;
 
-    @prop({ default: true })
+    @prop.default(true) // same as @prop({ default: true })
     prop2: boolean;
 
-    @p prop3: string;
-    @pr prop4: string;
+    @prop.required      // same as @prop({ required: true })
+    prop3: string;
+
+    @prop.required(validator: s => /^[A-Z]+$/.test(s))
+    prop4: string;
 
     // methods with known name(data, created, mounted, etc) will be registered as hooks
     mounted() {
@@ -45,7 +48,7 @@ class MyComponent extends Vue {
     greet() {
         console.log(this.msg);
     }
-    // properties with getter and/or setter will be registered to "computed"
+    // properties with getter/setter (setter is optional) will be registered to "computed"
     get computedMsg() {
         return `computed ${this.msg}`;
     }
@@ -68,8 +71,8 @@ const MyComponent = Vue.extend({
     props: {
         prop1: String,
         prop2: { default: true, type: Boolean },
-        prop3: String,
-        prop4: { require: true, type: String }
+        prop3: { required: true, type: String },
+        prop4: { required: true, validator: s => /^[A-Z]+$/.test(s), type: String }
     },
     mounted: function () {
         console.log("mounted!");
@@ -78,23 +81,18 @@ const MyComponent = Vue.extend({
         console.log("beforeDestroy", this.msg);
     },
     methods: {
-        greet: function() {
+        greet() {
             console.log(this.msg);
         }
     },
     computed: {
-        computedMsg: function() {
+        computedMsg() {
             return `computed ${this.msg}`;
         }
     },
     watch: {
         msg: function(value: string, oldValue: string) {
             console.log("msg changed!");
-        }
-    },
-    events: {
-        bye: function() {
-            console.log("goodbye!");
         }
     }
 });
@@ -105,7 +103,7 @@ const MyComponent = Vue.extend({
 ### Make `data()` typesafe
 
 When you use `data()`, you also must declare data members as properties
-because typescript compiler must know it.
+because typescript compiler must know them.
 
 ```ts
 @component({
@@ -126,7 +124,7 @@ class MyComponent extends Vue {
 Instead of above code, you can do as below, this is more typesafe than above one.
 
 ```ts
-// define interface which represents data member of MyComponent
+// define interface which represents data members of MyComponent
 interface MyComponentData {
     msg: string;
 }
@@ -161,7 +159,7 @@ class MyComponent extends Vue {
 }
 ```
 
-In other words, if you have installed appropriate plugin for bundler, you can precompile template in bundle process.
+In other words, if you have installed appropriate plugin for bundler, you can precompile templates in bundle process.
 
 ```ts
 // Example for webpack and vue-template-compiler-loader
