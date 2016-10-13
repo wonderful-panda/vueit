@@ -7,13 +7,13 @@ export interface WatchOptions {
 }
 
 export interface PropDecoratorType {
-    (options?: Vue.PropOptions): PropertyDecorator;
-    (target: any, propertyKey: string | Symbol): void;
+    (options?: Vue.PropOptions): PropertyDecorator & ParameterDecorator;
+    (target: any, propertyKey: string | Symbol, paramIndex?: number): void;
 }
 
 export interface PropType extends PropDecoratorType {
     required: PropDecoratorType;
-    default: (defaultValue: any, options?: Vue.PropOptions) => PropertyDecorator;
+    default: (defaultValue: any, options?: Vue.PropOptions) => PropertyDecorator & ParameterDecorator;
 }
 
 type $createElement = typeof Vue.prototype.$createElement;
