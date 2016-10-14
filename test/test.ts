@@ -300,65 +300,109 @@ describe("vueit", function () {
             assert(c.$el.outerHTML === "<div>test</div>");
         });
         describe("functional component", function() {
-            @functionalComponent
-            class MyFunctionalComponent {
-                render(h, context,
-                       @prop a: string,
-                       @prop.default("b-default") b: string,
-                       @prop.required c: number) {
-                    return h("div", [
-                        h("span", { staticClass: "A" }, [a]),
-                        h("span", { staticClass: "B" }, [b]),
-                        h("span", { staticClass: "C" }, [c]),
-                    ]);
+            describe("basic test", function() {
+                @functionalComponent
+                class MyFunctionalComponent {
+                    render(h, context,
+                           @prop a: string,
+                           @prop.default("b-default") b: string,
+                           @prop.required c: number) {
+                        return h("div", [
+                            h("span", { staticClass: "A" }, [a]),
+                            h("span", { staticClass: "B" }, [b]),
+                            h("span", { staticClass: "C" }, [c]),
+                        ]);
+                    }
                 }
-            }
-            it("basic test", function() {
-                const Root = Vue.extend({
-                    render(h) {
-                        return h(MyFunctionalComponent, { props: { a: "a-value", b: "b-value", c: 100 } });
-                    }
+                it("rendered dom is collect", function() {
+                    const Root = Vue.extend({
+                        render(h) {
+                            return h(MyFunctionalComponent, { props: { a: "a-value", b: "b-value", c: 100 } });
+                        }
+                    });
+                    const $ = querySelectorOf(createComponent(Root).$el);
+                    assert($(".A").innerText === "a-value");
+                    assert($(".B").innerText === "b-value");
+                    assert($(".C").innerText === "100");
                 });
-                const $ = querySelectorOf(createComponent(Root).$el);
-                assert($(".A").innerText === "a-value");
-                assert($(".B").innerText === "b-value");
-                assert($(".C").innerText === "100");
-            });
-            it("default value", function() {
-                const Root = Vue.extend({
-                    render(h) {
-                        return h(MyFunctionalComponent, { props: { a: "a-value", c: 100 } });
-                    }
+                it("default value is correctly filled", function() {
+                    const Root = Vue.extend({
+                        render(h) {
+                            return h(MyFunctionalComponent, { props: { a: "a-value", c: 100 } });
+                        }
+                    });
+                    const $ = querySelectorOf(createComponent(Root).$el);
+                    assert($(".B").innerText === "b-default");
                 });
-                const $ = querySelectorOf(createComponent(Root).$el);
-                assert($(".B").innerText === "b-default");
-            });
-            it("required", function() {
-                const Root = Vue.extend({
-                    render(h) {
-                        return h(MyFunctionalComponent, { props: { a: "a-value" } });
-                    }
+                it("warn if required prop is not specified", function() {
+                    const Root = Vue.extend({
+                        render(h) {
+                            return h(MyFunctionalComponent, { props: { a: "a-value" } });
+                        }
+                    });
+                    const $ = querySelectorOf(createComponent(Root).$el);
+                    assert($(".C").innerText === "");
+                    assert(warns.length === 1);
+                    assert(/^Missing required .* "c"/.test(warns[0]));
                 });
-                const $ = querySelectorOf(createComponent(Root).$el);
-                assert($(".C").innerText === "");
-                assert(warns.length === 1);
-                assert(/^Missing required .* "c"/.test(warns[0]));
-            });
-            it("type validation", function() {
-                const Root = Vue.extend({
-                    render(h) {
-                        return h(MyFunctionalComponent, { props: { a: 100, b: 100, c: "c-value" } });
-                    }
+                it("warn if passed wrong type", function() {
+                    const Root = Vue.extend({
+                        render(h) {
+                            return h(MyFunctionalComponent, { props: { a: 100, b: 100, c: "c-value" } });
+                        }
+                    });
+                    const $ = querySelectorOf(createComponent(Root).$el);
+                    assert($(".A").innerText === "100");
+                    assert($(".B").innerText === "100");
+                    assert($(".C").innerText === "c-value");
+                    assert(warns.length === 3);
+                    const [w1, w2, w3] = warns;
+                    assert(/^Invalid prop: type check .* "a"/.test(w1));
+                    assert(/^Invalid prop: type check .* "b"/.test(w2));
+                    assert(/^Invalid prop: type check .* "c"/.test(w3));
                 });
-                const $ = querySelectorOf(createComponent(Root).$el);
-                assert($(".A").innerText === "100");
-                assert($(".B").innerText === "100");
-                assert($(".C").innerText === "c-value");
-                assert(warns.length === 3);
-                const [w1, w2, w3] = warns;
-                assert(/^Invalid prop: type check .* "a"/.test(w1));
-                assert(/^Invalid prop: type check .* "b"/.test(w2));
-                assert(/^Invalid prop: type check .* "c"/.test(w3));
+           });
+           describe("additional test", function() {
+               it("static render() is also acceptable", function() {
+                    @functionalComponent
+                    class MyFunctionalComponent {
+                        static render(h, context, @prop a: string, @prop b: string) {
+                            return h("div", [
+                                h("span", { staticClass: "A" }, [a]),
+                                h("span", { staticClass: "B" }, [b]),
+                            ]);
+                        }
+                    }
+                    const Root = Vue.extend({
+                        render(h) {
+                            return h(MyFunctionalComponent, { props: { a: "a-value", b: 100 } });
+                        }
+                    });
+                    const $ = querySelectorOf(createComponent(Root).$el);
+                    assert($(".A").innerText === "a-value");
+                    assert($(".B").innerText === "100");
+                    assert(warns.length === 1 && /^Invalid prop: type check .* "b"/.test(warns[0]));
+                });
+                it("@prop can be removed. (but type validation does not work)", function() {
+                    @functionalComponent
+                    class MyFunctionalComponent {
+                        render(h, context, a: string, b: string) {
+                            return h("div", [
+                                h("span", { staticClass: "A" }, [a]),
+                                h("span", { staticClass: "B" }, [b]),
+                            ]);
+                        }
+                    }
+                    const Root = Vue.extend({
+                        render(h) {
+                            return h(MyFunctionalComponent, { props: { a: "a-value", b: 100 } });
+                        }
+                    });
+                    const $ = querySelectorOf(createComponent(Root).$el);
+                    assert($(".A").innerText === "a-value");
+                    assert($(".B").innerText === "100");
+                    assert(warns.length === 0);
+                });
             });
         });
     });

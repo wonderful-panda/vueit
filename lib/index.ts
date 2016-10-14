@@ -97,9 +97,10 @@ function makefunctionalComponent(target: Function): Function | void {
     }
     paramNames.splice(0, 2); // first 2 params are createElement and context.
     const ao = Reflect.getOwnMetadata(AnnotatedOptionsKey, obj) as AnnotatedOptions;
+    const paramProps = ao ? ao.paramProps : [];
     const props: { [name: string]: Vue.PropOptions } = {}
     paramNames.forEach((name, i) => {
-        props[name] = ao.paramProps[i + 2];
+        props[name] = paramProps[i + 2];
     });
     const options: Vue.FunctionalComponentOptions = {
         name: target.name,
