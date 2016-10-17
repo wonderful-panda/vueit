@@ -107,9 +107,7 @@ import {functionalComponent, prop} from "vueit";
 
 @functionalComponent
 class MyFunctionalComponent extends Vue {
-    static render(h, context,
-           @prop text: string,
-           @prop.default(false) done: boolean) {
+    static render(h, context, text: string, done: boolean) {
         const style = { textDecoration: (done ? "line-through" : "none") };
         return h("div", { style }, [ text ]);
     }
@@ -122,10 +120,7 @@ Above code is equivalent to
 const MyFunctionalComponent = Vue.extends({
     name: "MyFunctionalComponent",
     functional: true,
-    props: {
-        text: { type: String },
-        done: { type: Boolean, default: false }
-    },
+    props: ["text", "done"],
     render(h, context) {
         const text = context.props.text;
         const done = context.props.done;
@@ -134,6 +129,22 @@ const MyFunctionalComponent = Vue.extends({
     }
 });
 ```
+
+You can use @prop to specify prop options like below.
+
+```typescript
+@functionalComponent
+class MyFunctionalComponent extends Vue {
+    static render(h, context,
+                  @prop,required text: string,
+                  @prop.default(false) done: boolean) {
+        const style = { textDecoration: (done ? "line-through" : "none") };
+        return h("div", { style }, [ text ]);
+    }
+}
+```
+
+
 
 ## Tips
 
