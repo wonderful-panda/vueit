@@ -2,7 +2,7 @@
 "use strict";
 import * as assert from "power-assert";
 import * as Vue from "vue";
-import { component, prop, watch } from "../lib/index";
+import { component, prop, watch, functionalComponent } from "../lib/index";
 import * as compiler from "vue-template-compiler";
 import * as types from "../types";
 
@@ -20,6 +20,12 @@ function compileTemplate(source: string) {
     } as types.CompiledTemplate;
 }
 
+function querySelectorOf(el: Element) {
+    return el.querySelector.bind(el);
+}
+function querySelectorAllOf(el: Element) {
+    return el.querySelectorAll.bind(el);
+}
 
 const orgConsoleError = console.error;
 describe("vueit", function () {
@@ -292,6 +298,68 @@ describe("vueit", function () {
             };
             const c = createComponent(MyComponent, { prop1: "test" });
             assert(c.$el.outerHTML === "<div>test</div>");
+        });
+        describe("functional component", function() {
+            @functionalComponent
+            class MyFunctionalComponent {
+                render(h, context,
+                       @prop a: string,
+                       @prop.default("b-default") b: string,
+                       @prop.required c: number) {
+                    return h("div", [
+                        h("span", { staticClass: "A" }, [a]),
+                        h("span", { staticClass: "B" }, [b]),
+                        h("span", { staticClass: "C" }, [c]),
+                    ]);
+                }
+            }
+            it("basic test", function() {
+                const Root = Vue.extend({
+                    render(h) {
+                        return h(MyFunctionalComponent, { props: { a: "a-value", b: "b-value", c: 100 } });
+                    }
+                });
+                const $ = querySelectorOf(createComponent(Root).$el);
+                assert($(".A").innerText === "a-value");
+                assert($(".B").innerText === "b-value");
+                assert($(".C").innerText === "100");
+            });
+            it("default value", function() {
+                const Root = Vue.extend({
+                    render(h) {
+                        return h(MyFunctionalComponent, { props: { a: "a-value", c: 100 } });
+                    }
+                });
+                const $ = querySelectorOf(createComponent(Root).$el);
+                assert($(".B").innerText === "b-default");
+            });
+            it("required", function() {
+                const Root = Vue.extend({
+                    render(h) {
+                        return h(MyFunctionalComponent, { props: { a: "a-value" } });
+                    }
+                });
+                const $ = querySelectorOf(createComponent(Root).$el);
+                assert($(".C").innerText === "");
+                assert(warns.length === 1);
+                assert(/^Missing required .* "c"/.test(warns[0]));
+            });
+            it("type validation", function() {
+                const Root = Vue.extend({
+                    render(h) {
+                        return h(MyFunctionalComponent, { props: { a: 100, b: 100, c: "c-value" } });
+                    }
+                });
+                const $ = querySelectorOf(createComponent(Root).$el);
+                assert($(".A").innerText === "100");
+                assert($(".B").innerText === "100");
+                assert($(".C").innerText === "c-value");
+                assert(warns.length === 3);
+                const [w1, w2, w3] = warns;
+                assert(/^Invalid prop: type check .* "a"/.test(w1));
+                assert(/^Invalid prop: type check .* "b"/.test(w2));
+                assert(/^Invalid prop: type check .* "c"/.test(w3));
+            });
         });
     });
 });

@@ -5,6 +5,7 @@ declare namespace vueit {
 
     interface Static {
         component<V extends Vue>(option?: types.ComponentOptions<V>): ClassDecorator;
+        functionalComponent: ClassDecorator;
         prop: types.PropType;
         watch: (option: string|types.WatchOptions) => PropertyDecorator;
     }

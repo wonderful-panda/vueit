@@ -10,7 +10,9 @@ Vue >= 2.0.1
 
 ## Example
 
-```ts
+### Normal component
+
+```typescript
 import {component, prop, watch} from "vueit";
 
 @component<MyComponent>({
@@ -62,7 +64,7 @@ class MyComponent extends Vue {
 
 Above code is equivalent to
 
-```js
+```javascript
 const MyComponent = Vue.extend({
     template: `<div>...</div>`,
     data: function() {
@@ -98,6 +100,52 @@ const MyComponent = Vue.extend({
 });
 ```
 
+### Functional component (Experimental)
+
+```typescript
+import {functionalComponent, prop} from "vueit";
+
+@functionalComponent
+class MyFunctionalComponent extends Vue {
+    static render(h, context, text: string, done: boolean) {
+        const style = { textDecoration: (done ? "line-through" : "none") };
+        return h("div", { style }, [ text ]);
+    }
+}
+```
+
+Above code is equivalent to
+
+```javascript
+const MyFunctionalComponent = Vue.extends({
+    name: "MyFunctionalComponent",
+    functional: true,
+    props: ["text", "done"],
+    render(h, context) {
+        const text = context.props.text;
+        const done = context.props.done;
+        const style = { textDecoration: (done ? "line-through" : "none") };
+        return h("div", { style }, [ text ]);
+    }
+});
+```
+
+You can use @prop to specify prop options like below.
+
+```typescript
+@functionalComponent
+class MyFunctionalComponent extends Vue {
+    static render(h, context,
+                  @prop,required text: string,
+                  @prop.default(false) done: boolean) {
+        const style = { textDecoration: (done ? "line-through" : "none") };
+        return h("div", { style }, [ text ]);
+    }
+}
+```
+
+
+
 ## Tips
 
 ### Make `data()` typesafe
@@ -105,7 +153,7 @@ const MyComponent = Vue.extend({
 When you use `data()`, you also must declare data members as properties
 because typescript compiler must know them.
 
-```ts
+```typescript
 @component({
     template: `<div>...</div>`
 })
@@ -123,7 +171,7 @@ class MyComponent extends Vue {
 
 Instead of above code, you can do as below, this is more typesafe than above one.
 
-```ts
+```typescript
 // define interface which represents data members of MyComponent
 interface MyComponentData {
     msg: string;
@@ -150,7 +198,7 @@ class MyComponent extends Vue {
 
 You can pass output from `vue-template-compiler` to `compiledTemplate` directly.
 
-```ts
+```typescript
 @component({
     compiledTemplate : { render: ..., staticRenderFns: [...] }
 })
@@ -161,7 +209,7 @@ class MyComponent extends Vue {
 
 In other words, if you have installed appropriate plugin for bundler, you can precompile templates in bundle process.
 
-```ts
+```typescript
 // Example for webpack and vue-template-compiler-loader
 @component({
     compiledTemplate: require("vue-template-compiler!./mycomponent.html")
@@ -173,7 +221,7 @@ class MyComponent extends Vue {
 
 You also can do like below. `compiledTemplate` is just shorthand.
 
-```ts
+```typescript
 const { render, staticRenderFns } = require("vue-template-compiler!./mycomponent.html");
 @component({
     render,
