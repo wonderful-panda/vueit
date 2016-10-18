@@ -58,8 +58,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 	
-	function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
-	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
 	__webpack_require__(1);
@@ -69,8 +67,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    _classCallCheck(this, AnnotatedOptions);
 	
 	    this.props = {};
-	    this.paramTypes = undefined;
-	    this.paramProps = [];
 	    this.watch = {};
 	    this.events = {};
 	};
@@ -132,31 +128,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	function makefunctionalComponent(target) {
 	    var obj = "render" in target ? target : target.prototype;
 	    var render = obj.render;
-	    if (render.length < 2) {
-	        error("\"render\" function must have at least 2 parameters: " + target.name);
+	    if (render.length != 2) {
+	        error("\"render\" function must have 2 parameters: " + target.name);
 	        return;
 	    }
-	    var paramNames = getParamNames(render.toString());
-	    if (render.length !== paramNames.length) {
-	        error("failed to parse parameter list: " + target.name);
-	        return;
-	    }
-	    paramNames.splice(0, 2); // first 2 params are createElement and context.
 	    var ao = Reflect.getOwnMetadata(AnnotatedOptionsKey, obj);
-	    var props = {};
-	    paramNames.forEach(function (name, i) {
-	        props[name] = ao.paramProps[i + 2];
-	    });
+	    var props = ao ? ao.props : {};
 	    var options = {
 	        name: target.name,
 	        functional: true,
 	        props: props,
-	        render: paramNames.length === 0 ? render : function (h, context) {
-	            var args = paramNames.map(function (name) {
-	                return context.props[name];
-	            });
-	            return render.apply(undefined, [h, context].concat(_toConsumableArray(args)));
-	        }
+	        render: props ? function (h, context) {
+	            return render.bind(context.props)(h, context);
+	        } : render
 	    };
 	    return Vue.extend(options);
 	}
@@ -188,32 +172,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    opts.type = type;
 	}
-	function defineProp(target, propertyKey, paramIndex, options) {
+	function defineProp(target, propertyKey, options) {
 	    options = Object.assign({}, options);
-	    if (typeof paramIndex === "undefined") {
-	        definePropForField(target, propertyKey, options);
-	    } else {
-	        definePropForParameter(target, propertyKey, paramIndex, options);
-	    }
-	}
-	function definePropForField(target, propertyKey, options) {
-	    // detect design type and set prop validation
 	    var type = Reflect.getOwnMetadata(DesignTypeKey, target, propertyKey);
 	    trySetPropTypeValidation(target, propertyKey, options, type);
 	    getAnnotatedOptions(target).props[propertyKey] = options;
-	}
-	function definePropForParameter(target, propertyKey, paramIndex, options) {
-	    if (propertyKey !== "render") {
-	        warn("when @prop is used as parameter decorator, it can be used in \"render\" method: " + target.constructor.name + "." + propertyKey);
-	        return;
-	    }
-	    var ao = getAnnotatedOptions(target);
-	    if (!ao.paramTypes) {
-	        ao.paramTypes = Reflect.getOwnMetadata(DesignParamTypesKey, target, propertyKey);
-	    }
-	    ;
-	    trySetPropTypeValidation(target, propertyKey, options, ao.paramTypes[paramIndex]);
-	    ao.paramProps[paramIndex] = options;
 	}
 	function defineWatch(target, propertyKey, option) {
 	    var descriptor = Object.getOwnPropertyDescriptor(target, propertyKey);
@@ -237,8 +200,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            // Used with argument list. Like `@prop()` or `@prop({ ... })`
 	            var options = args[0] || {};
 	            return {
-	                v: function v(target, propertyKey, paramIndex) {
-	                    return defineProp(target, propertyKey.toString(), paramIndex, options);
+	                v: function v(target, propertyKey) {
+	                    return defineProp(target, propertyKey.toString(), options);
 	                }
 	            };
 	        }();
@@ -248,8 +211,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        // Used without argument list. Like `@prop`
 	        var target = args[0];
 	        var propertyKey = args[1].toString();
-	        var paramIndex = args[2];
-	        defineProp(target, propertyKey, paramIndex, {});
+	        defineProp(target, propertyKey, {});
 	    }
 	};
 	prop.required = function () {
