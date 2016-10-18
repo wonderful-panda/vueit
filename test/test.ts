@@ -302,14 +302,14 @@ describe("vueit", function () {
         describe("functional component", function() {
             @functionalComponent
             class MyFunctionalComponent {
-                render(h, context,
-                       @prop a: string,
-                       @prop.default("b-default") b: string,
-                       @prop.required c: number) {
+                @prop a: string;
+                @prop.default("b-default") b: string;
+                @prop.required c: number;
+                render(h, context) {
                     return h("div", [
-                        h("span", { staticClass: "A" }, [a]),
-                        h("span", { staticClass: "B" }, [b]),
-                        h("span", { staticClass: "C" }, [c]),
+                        h("span", { staticClass: "A" }, [this.a]),
+                        h("span", { staticClass: "B" }, [this.b]),
+                        h("span", { staticClass: "C" }, [this.c]),
                     ]);
                 }
             }

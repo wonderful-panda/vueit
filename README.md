@@ -107,9 +107,11 @@ import {functionalComponent, prop} from "vueit";
 
 @functionalComponent
 class MyFunctionalComponent extends Vue {
-    static render(h, context, text: string, done: boolean) {
-        const style = { textDecoration: (done ? "line-through" : "none") };
-        return h("div", { style }, [ text ]);
+    @prop.required text: string;
+    @prop.default(false) done: boolean;
+    static render(h, context) {
+        const style = { textDecoration: (this.done ? "line-through" : "none") };
+        return h("div", { style }, [ this.text ]);
     }
 }
 ```
@@ -120,31 +122,17 @@ Above code is equivalent to
 const MyFunctionalComponent = Vue.extends({
     name: "MyFunctionalComponent",
     functional: true,
-    props: ["text", "done"],
+    props: {
+        text: { type: String, required: true },
+        done: { type: Boolean, default: false }
+    },
     render(h, context) {
-        const text = context.props.text;
-        const done = context.props.done;
-        const style = { textDecoration: (done ? "line-through" : "none") };
-        return h("div", { style }, [ text ]);
+        var this_ = context.props;
+        const style = { textDecoration: (this_.done ? "line-through" : "none") };
+        return h("div", { style }, [ this_.text ]);
     }
 });
 ```
-
-You can use @prop to specify prop options like below.
-
-```typescript
-@functionalComponent
-class MyFunctionalComponent extends Vue {
-    static render(h, context,
-                  @prop,required text: string,
-                  @prop.default(false) done: boolean) {
-        const style = { textDecoration: (done ? "line-through" : "none") };
-        return h("div", { style }, [ text ]);
-    }
-}
-```
-
-
 
 ## Tips
 

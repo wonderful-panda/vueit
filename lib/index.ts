@@ -4,8 +4,6 @@ import * as types from "../types";
 
 class AnnotatedOptions {
     props: { [key: string]: Vue.PropOptions } = {};
-    paramTypes: any[] = undefined;
-    paramProps: Vue.PropOptions[] = [];
     watch: { [key: string]: Vue.WatchOptions & { handler: Vue.WatchHandler<Vue> } } = {};
     events: { [key: string]: (...args: any[]) => boolean | void } = {};
 }
@@ -85,33 +83,22 @@ function makeComponent<V extends Vue>(target: Function, option: types.ComponentO
 
 function makefunctionalComponent(target: Function): Function | void {
     const obj: any = ("render" in target ? target : target.prototype);
-    const render = <(h: types.$createElement, context: Vue.VNodeData, ...props) => Vue.VNode>obj.render;
-    if (render.length < 2) {
-        error(`"render" function must have at least 2 parameters: ${ target.name }`);
+    const render = <(h: types.$createElement, context: Vue.VNodeData) => Vue.VNode>obj.render;
+    if (render.length != 2) {
+        error(`"render" function must have 2 parameters: ${ target.name }`);
         return;
     }
-    const paramNames = getParamNames(render.toString());
-    if (render.length !== paramNames.length) {
-        error(`failed to parse parameter list: ${ target.name }`);
-        return;
-    }
-    paramNames.splice(0, 2); // first 2 params are createElement and context.
     const ao = Reflect.getOwnMetadata(AnnotatedOptionsKey, obj) as AnnotatedOptions;
-    const props: { [name: string]: Vue.PropOptions } = {}
-    paramNames.forEach((name, i) => {
-        props[name] = ao.paramProps[i + 2];
-    });
+    const props = ao ? ao.props : {}
     const options: Vue.FunctionalComponentOptions = {
         name: target.name,
         functional: true,
         props,
         render: (
-            paramNames.length === 0
-            ? render
-            : function(h, context) {
-                const args = paramNames.map(name => context.props[name]);
-                return render(h, context, ...args);
-            }
+            props ? function(h, context) {
+                        return render.bind(context.props)(h, context);
+                    }
+                  : render
         )
     };
     return Vue.extend(options);
@@ -148,34 +135,11 @@ function trySetPropTypeValidation(target: Object, propertyKey: string, opts: Vue
     opts.type = type;
 }
 
-function defineProp(target: Object, propertyKey: string, paramIndex: number, options: Vue.PropOptions) {
+function defineProp(target: Object, propertyKey: string, options: Vue.PropOptions) {
     options = Object.assign({}, options);
-    if (typeof paramIndex === "undefined") {
-        definePropForField(target, propertyKey, options);
-    }
-    else {
-        definePropForParameter(target, propertyKey, paramIndex, options);
-    }
-}
-
-function definePropForField(target: Object, propertyKey: string, options: Vue.PropOptions) {
-    // detect design type and set prop validation
     const type = Reflect.getOwnMetadata(DesignTypeKey, target, propertyKey);
     trySetPropTypeValidation(target, propertyKey, options, type);
     getAnnotatedOptions(target).props[propertyKey] = options;
-}
-
-function definePropForParameter(target: Object, propertyKey: string, paramIndex: number, options: Vue.PropOptions) {
-    if (propertyKey !== "render") {
-        warn(`when @prop is used as parameter decorator, it can be used in "render" method: ${ target.constructor.name }.${ propertyKey }`);
-        return;
-    }
-    const ao = getAnnotatedOptions(target);
-    if (!ao.paramTypes) {
-        ao.paramTypes = Reflect.getOwnMetadata(DesignParamTypesKey, target, propertyKey);
-    };
-    trySetPropTypeValidation(target, propertyKey, options, ao.paramTypes[paramIndex]);
-    ao.paramProps[paramIndex] = options;
 }
 
 function defineWatch(target: Object, propertyKey: string, option: types.WatchOptions) {
@@ -191,21 +155,20 @@ function defineWatch(target: Object, propertyKey: string, option: types.WatchOpt
     };
 }
 
-const prop = <types.PropType>function (...args): PropertyDecorator & ParameterDecorator {
+const prop = <types.PropType>function (...args): PropertyDecorator {
     if (args.length <= 1) {
         // Used with argument list. Like `@prop()` or `@prop({ ... })`
         const options = <Vue.PropOptions>(args[0] || {});
-        return (target, propertyKey, paramIndex?) => defineProp(target, propertyKey.toString(), paramIndex, options);
+        return (target, propertyKey) => defineProp(target, propertyKey.toString(), options);
     }
     else {
         // Used without argument list. Like `@prop`
         const target = args[0];
         const propertyKey = args[1].toString();
-        const paramIndex = <number>args[2];
-        defineProp(target, propertyKey, paramIndex, {});
+        defineProp(target, propertyKey, {});
     }
 };
-prop.required = function (...args): PropertyDecorator & ParameterDecorator {
+prop.required = function (...args): PropertyDecorator {
     if (args.length <= 1) {
         // Used with argument list. Like `@prop.required()` or `@prop.required({ ... })`
         return prop(Object.assign({ required: true }, args[0]));
